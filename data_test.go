@@ -3,28 +3,29 @@ package main
 import (
 	"github.com/stretchr/testify/require"
 	"github.com/uber/h3-go"
+	"strings"
 	"testing"
 )
 
 func TestSqlDb_AddUser(t *testing.T) {
-	id, err := Db.AddUser(NewUser("Maria", 37.775938728915946, -122.41795063018799, Client))
+	id, err := Db.AddUser(NewUser("Test_Mario Benedetti", -32.8181, -56.5064, ServiceProvider))
 	require.NotEqual(t, id, 0)
 	require.NoError(t, err)
 
 	user, err := Db.GetUser(id)
 	require.NoError(t, err)
 	require.Equal(t, user.Id, id)
-	require.Equal(t, user.Category, Category(Client))
-	require.Equal(t, user.GeoCord.Latitude, 37.775938728915946)
-	require.Equal(t, user.GeoCord.Longitude, -122.41795063018799)
+	require.Equal(t, user.Category, Category(ServiceProvider))
+	require.Equal(t, user.GeoCord.Latitude, -32.8181)
+	require.Equal(t, user.GeoCord.Longitude, -56.5064)
 	require.Equal(t, len(user.H3Positions), 16)
 
 	user1, err := Db.DeleteUser(id)
 	require.NoError(t, err)
 	require.Equal(t, user1.Id, id)
-	require.Equal(t, user1.Category, Category(Client))
-	require.Equal(t, user1.GeoCord.Latitude, 37.775938728915946)
-	require.Equal(t, user1.GeoCord.Longitude, -122.41795063018799)
+	require.Equal(t, user1.Category, Category(ServiceProvider))
+	require.Equal(t, user1.GeoCord.Latitude, -32.8181)
+	require.Equal(t, user1.GeoCord.Longitude, -56.5064)
 	require.Equal(t, len(user1.H3Positions), 16)
 
 }
@@ -32,14 +33,14 @@ func TestSqlDb_AddUser(t *testing.T) {
 func TestSqlDb_ListUsers(t *testing.T) {
 	var err error
 
-	user1 := NewUser("Ruben Dario", 12.732229, -86.123326, Client)
+	user1 := NewUser("Test_Ruben Dario", 12.732229, -86.123326, Client)
 	user1.Id, err = Db.AddUser(user1)
 	require.NoError(t, err)
 
-	user2 := NewUser("Mario Benedetti", -32.8181, -56.5064, ServiceProvider)
+	user2 := NewUser("Test_Mario Benedetti", -32.8181, -56.5064, ServiceProvider)
 	user2.Id, err = Db.AddUser(user2)
 	require.NoError(t, err)
-	user3 := NewUser("Pablo Neruda", -36.143747, -71.827252, Client)
+	user3 := NewUser("Test_Pablo Neruda", -36.143747, -71.827252, Client)
 	user3.Id, err = Db.AddUser(user3)
 	require.NoError(t, err)
 
@@ -79,7 +80,7 @@ func TestSqlDb_ListUsers(t *testing.T) {
 
 func TestSqlDb_UpdateUser(t *testing.T) {
 	var err error
-	user1 := NewUser("Ruben Dario", 12.732229, -86.123326, Client)
+	user1 := NewUser("Test_Ruben Dario", 12.732229, -86.123326, Client)
 	user1.Id, err = Db.AddUser(user1)
 	require.NoError(t, err)
 	userToUpdate := NewUser(user1.Name, user1.GeoCord.Latitude+1, user1.GeoCord.Longitude-1, user1.Category)
@@ -94,13 +95,43 @@ func TestSqlDb_UpdateUser(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestSqlDb_GetCloseUsers(t *testing.T) {
+	var err error
+	user1 := NewUser("Test_Ruben Dario", 12.732229, -86.123326, Client)
+	user1.Id, err = Db.AddUser(user1)
+	require.NoError(t, err)
+
+	user2 := NewUser("Test_Mario Benedetti", -32.8181, -56.5064, ServiceProvider)
+	user2.Id, err = Db.AddUser(user2)
+	require.NoError(t, err)
+
+	user3 := NewUser("Test_Pablo Neruda", -36.143747, -71.827252, Client)
+	user3.Id, err = Db.AddUser(user3)
+	require.NoError(t, err)
+
+	user4 := NewUser("Test_Victor Jara", -36.534865, -72.434204, ServiceProvider)
+	user4.Id, err = Db.AddUser(user4)
+	require.NoError(t, err)
+
+	resolution := 1
+	userList, err := Db.GetCloseUsers(resolution, user3.H3Positions[resolution], Generic)
+	require.NoError(t, err)
+	require.Len(t, userList, 2)
+
+	userList1, err := Db.GetCloseUsers(resolution, user1.H3Positions[resolution], Client)
+	require.NoError(t, err)
+	require.Len(t, userList1, 1)
+}
+
 func TestSqlDb_Close(t *testing.T) {
 	t.Cleanup(func() {
 		users, err := Db.ListUsers(Generic)
 		require.NoError(t, err)
 		for i := range users {
-			_, err := Db.DeleteUser(users[i].Id)
-			require.NoError(t, err)
+			if strings.Split(users[i].Name, "_")[0] == "Test" {
+				_, err := Db.DeleteUser(users[i].Id)
+				require.NoError(t, err)
+			}
 		}
 		defer Db.Close()
 	})

@@ -8,23 +8,27 @@ import (
 )
 
 const (
-	SslModeDisable = "disable"
-	SslModeEnable  = "enable"
-	GET            = "get"
-	LIST           = "list"
-	LIST_BY_CAT    = "listByCat"
-	DELETE         = "delete"
-	INSERT         = "insert"
-	UPDATE         = "update"
+	SslModeDisable     = "disable"
+	SslModeEnable      = "enable"
+	GET                = "get"
+	GET_CLOSE_WITH_CAT = "getCloseWithCat"
+	GET_CLOSE          = "getClose"
+	LIST               = "list"
+	LIST_BY_CAT        = "listByCat"
+	DELETE             = "delete"
+	INSERT             = "insert"
+	UPDATE             = "update"
 )
 
 var stmtMap = map[string]string{
-	"get":       "select * from \"user\" where id=$1",
-	"listByCat": "select * from \"user\" where category=$1",
-	"list":      "select * from \"user\"",
-	"insert":    "insert into \"user\" ( name, latitude, longitude, h3index, category) values( $1, $2, $3, $4, $5) returning id",
-	"update":    "update \"user\" set latitude=$2, longitude=$3, h3index=$4 where id=$1 returning id, name, latitude, longitude, h3index, category",
-	"delete":    "delete from \"user\" where id=$1 returning id, name, latitude, longitude, h3index, category",
+	"get":             "select * from \"user\" where id=$1",
+	"getCloseWithCat": "select * from \"user\" where h3index[$1]=$2 and category=$3",
+	"getClose":        "select * from \"user\" where h3index[$1]=$2",
+	"listByCat":       "select * from \"user\" where category=$1",
+	"list":            "select * from \"user\"",
+	"insert":          "insert into \"user\" ( name, latitude, longitude, h3index, category) values( $1, $2, $3, $4, $5) returning id",
+	"update":          "update \"user\" set latitude=$2, longitude=$3, h3index=$4 where id=$1 returning id, name, latitude, longitude, h3index, category",
+	"delete":          "delete from \"user\" where id=$1 returning id, name, latitude, longitude, h3index, category",
 }
 
 type SqlDb struct {
@@ -60,6 +64,46 @@ func (db *SqlDb) GetUser(id int) (*User, error) {
 	}
 
 	return &user, nil
+}
+
+// GetCloseUsers returns a list of users with the same h3IndexPos given a resolution.
+// Can be specified a category or use category = "GENERIC" for all users.
+func (db *SqlDb) GetCloseUsers(resolution int, h3IndexPos int64, category string) (userList []*User, err error) {
+	var stmt *sql.Stmt
+	var rowIter *sql.Rows
+
+	switch category {
+	case Client, ServiceProvider:
+		stmt, err = db.db.Prepare(stmtMap[GET_CLOSE_WITH_CAT])
+		if err != nil {
+			return nil, err
+		}
+
+		rowIter, err = stmt.Query(resolution+1, h3IndexPos, category)
+
+	case Generic:
+		stmt, err = db.db.Prepare(stmtMap[GET_CLOSE])
+		if err != nil {
+			return nil, err
+		}
+
+		rowIter, err = stmt.Query(resolution+1, h3IndexPos)
+	}
+	defer stmt.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	for rowIter.Next() {
+		var user User
+		err = rowIter.Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
+			&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category)
+		if err != nil {
+			return nil, err
+		}
+		userList = append(userList, &user)
+	}
+	return
 }
 
 // AddUser Add an user to the data base.
@@ -119,6 +163,7 @@ func (db *SqlDb) ListUsers(category string) (userList []*User, err error) {
 	return
 }
 
+// DeleteUser remove an user by its id.
 func (db *SqlDb) DeleteUser(id int) (*User, error) {
 	stmt, err := db.db.Prepare(stmtMap[DELETE])
 	if err != nil {
@@ -157,7 +202,7 @@ func (db *SqlDb) UpdateUser(id int, latitude, longitude float64, h3Positions []i
 	return &user, nil
 }
 
-// Close close the database
+// Close close the database.
 func (db *SqlDb) Close() error {
 	return db.db.Close()
 }
