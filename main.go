@@ -4,14 +4,30 @@ import (
 	"fmt"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
+	"log"
 	"net/http"
+	"os"
 )
 
 var Db Storage
 
+const (
+	DB_USER        = "DB_USER"
+	DB_PASS        = "DB_PASS"
+	DB_NAME        = "DB_NAME"
+	DB_HOST        = "DB_HOST"
+	DB_SSLMODE     = "DB_SSL_MODE"
+	ENDPOINT       = "ENDPOINT"
+	SERVER_ADDRESS = "SERVER_ADDRESS"
+)
+
 func init() {
 	var err error
-	Db, err = NewDb("postgres", "nightmare666", "location", SslModeDisable)
+	Db, err = NewDb(os.Getenv(DB_USER),
+		os.Getenv(DB_PASS),
+		os.Getenv(DB_HOST),
+		os.Getenv(DB_NAME),
+		os.Getenv(DB_SSLMODE))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -28,11 +44,12 @@ func main() {
 		Pretty: true,
 	})
 
-	http.Handle("/location", h)
+	http.Handle(os.Getenv(ENDPOINT), h)
 
 	defer Db.Close()
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		fmt.Println(err)
+	log.Print("Starting Server")
+	if err := http.ListenAndServe(os.Getenv(SERVER_ADDRESS), nil); err != nil {
+		log.Fatal(err)
 	}
 }

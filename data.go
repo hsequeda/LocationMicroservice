@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
+	"log"
 )
 
 const (
@@ -36,10 +37,11 @@ type SqlDb struct {
 }
 
 // NewDb construct a new Db type.
-func NewDb(user, password, dbName, sslMode string) (Storage, error) {
+func NewDb(user, password, dbHost, dbName, sslMode string) (Storage, error) {
+	log.Print("Creating Database")
 	db, err := sql.Open("postgres",
-		fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s",
-			user, password, dbName, sslMode))
+		fmt.Sprintf("user=%s password=%s host=%s dbname=%s sslmode=%s",
+			user, password, dbHost, dbName, sslMode))
 	if err != nil {
 		return nil, err
 	}
@@ -49,6 +51,7 @@ func NewDb(user, password, dbName, sslMode string) (Storage, error) {
 
 // GetUser get an user by its id.
 func (db *SqlDb) GetUser(id int) (*User, error) {
+	log.Print("Getting User")
 	stmt, err := db.db.Prepare(stmtMap[GET])
 	if err != nil {
 		return nil, err
@@ -69,6 +72,8 @@ func (db *SqlDb) GetUser(id int) (*User, error) {
 // GetCloseUsers returns a list of users with the same h3IndexPos given a resolution.
 // Can be specified a category or use category = "GENERIC" for all users.
 func (db *SqlDb) GetCloseUsers(resolution int, h3IndexPos int64, category string) (userList []*User, err error) {
+	log.Print("Getting Close User")
+
 	var stmt *sql.Stmt
 	var rowIter *sql.Rows
 
@@ -108,6 +113,7 @@ func (db *SqlDb) GetCloseUsers(resolution int, h3IndexPos int64, category string
 
 // AddUser Add an user to the data base.
 func (db *SqlDb) AddUser(user *User) (int, error) {
+	log.Print("Adding User")
 	stmt, err := db.db.Prepare(stmtMap[INSERT])
 	if err != nil {
 		return 0, err
@@ -126,6 +132,7 @@ func (db *SqlDb) AddUser(user *User) (int, error) {
 
 // ListUsers get all users by a category. Returns all users if category="GENERIC".
 func (db *SqlDb) ListUsers(category string) (userList []*User, err error) {
+	log.Print("Getting all User")
 	var stmt *sql.Stmt
 	var rowIter *sql.Rows
 
@@ -165,6 +172,7 @@ func (db *SqlDb) ListUsers(category string) (userList []*User, err error) {
 
 // DeleteUser remove an user by its id.
 func (db *SqlDb) DeleteUser(id int) (*User, error) {
+	log.Print("Removing User")
 	stmt, err := db.db.Prepare(stmtMap[DELETE])
 	if err != nil {
 		return nil, err
@@ -184,6 +192,7 @@ func (db *SqlDb) DeleteUser(id int) (*User, error) {
 
 // UpdateUser update the geo-position of an user.
 func (db *SqlDb) UpdateUser(id int, latitude, longitude float64, h3Positions []int64) (*User, error) {
+	log.Print("Updating User")
 	stmt, err := db.db.Prepare(stmtMap[UPDATE])
 	if err != nil {
 		return nil, err
@@ -204,5 +213,6 @@ func (db *SqlDb) UpdateUser(id int, latitude, longitude float64, h3Positions []i
 
 // Close close the database.
 func (db *SqlDb) Close() error {
+	log.Print("Closing database")
 	return db.db.Close()
 }
