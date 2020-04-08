@@ -11,11 +11,11 @@ const (
 type Category string
 
 type User struct {
-	Id          uint16      `json:"id"`
+	Id          int         `json:"id"`
 	Name        string      `json:"name"`
 	Category    Category    `json:"category"`
 	GeoCord     h3.GeoCoord `json:"geo_cord"`
-	H3Positions map[int]h3.H3Index
+	H3Positions []int64
 }
 
 var cacheUsers []*User
@@ -30,23 +30,23 @@ func NewUser(name string, lat, long float64, category Category) *User {
 		Name:     name,
 		Category: category,
 		GeoCord:  geoCord,
-		H3Positions: map[int]h3.H3Index{
-			0:  h3.FromGeo(geoCord, 0),
-			1:  h3.FromGeo(geoCord, 1),
-			2:  h3.FromGeo(geoCord, 2),
-			3:  h3.FromGeo(geoCord, 3),
-			4:  h3.FromGeo(geoCord, 4),
-			5:  h3.FromGeo(geoCord, 5),
-			6:  h3.FromGeo(geoCord, 6),
-			7:  h3.FromGeo(geoCord, 7),
-			8:  h3.FromGeo(geoCord, 8),
-			9:  h3.FromGeo(geoCord, 9),
-			10: h3.FromGeo(geoCord, 10),
-			11: h3.FromGeo(geoCord, 11),
-			12: h3.FromGeo(geoCord, 12),
-			13: h3.FromGeo(geoCord, 13),
-			14: h3.FromGeo(geoCord, 14),
-			15: h3.FromGeo(geoCord, 15),
+		H3Positions: []int64{
+			0:  int64(h3.FromGeo(geoCord, 0)),
+			1:  int64(h3.FromGeo(geoCord, 1)),
+			2:  int64(h3.FromGeo(geoCord, 2)),
+			3:  int64(h3.FromGeo(geoCord, 3)),
+			4:  int64(h3.FromGeo(geoCord, 4)),
+			5:  int64(h3.FromGeo(geoCord, 5)),
+			6:  int64(h3.FromGeo(geoCord, 6)),
+			7:  int64(h3.FromGeo(geoCord, 7)),
+			8:  int64(h3.FromGeo(geoCord, 8)),
+			9:  int64(h3.FromGeo(geoCord, 9)),
+			10: int64(h3.FromGeo(geoCord, 10)),
+			11: int64(h3.FromGeo(geoCord, 11)),
+			12: int64(h3.FromGeo(geoCord, 12)),
+			13: int64(h3.FromGeo(geoCord, 13)),
+			14: int64(h3.FromGeo(geoCord, 14)),
+			15: int64(h3.FromGeo(geoCord, 15)),
 		},
 	}
 }

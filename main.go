@@ -8,6 +8,15 @@ import (
 	"net/http"
 )
 
+var Db Storage
+
+func init() {
+	var err error
+	Db, err = NewDb("postgres", "nightmare666", "location", SslModeDisable)
+	if err != nil {
+		panic("implement me!")
+	}
+}
 
 func main() {
 	schema, _ := graphql.NewSchema(graphql.SchemaConfig{
@@ -22,8 +31,9 @@ func main() {
 
 	http.Handle("/location", h)
 
-	if err := http.ListenAndServe(":8080", nil);
-		err != nil {
+	defer Db.Close()
+
+	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic("Implement me!")
 	}
 }
@@ -63,4 +73,3 @@ func ExampleFromGeo() {
 	// Output:
 	// 0x8928308280fffff
 }
-
