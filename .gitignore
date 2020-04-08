@@ -1,0 +1,71 @@
+# Configuration
+*.vscode
+*.pro.user*
+config.json
+CMake*
+*.cflags
+*.config
+*.creator
+*.creator.user
+*.creator.user.*
+*.cxxflags
+*.files
+*.includes
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+coverage.html
+coverage.out
+coverage.tmp.out
+*.cover
+.hypothesis/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Linux stuff
+.directory
+
+# Jetbrains IDE's
+/.idea/
+
+# Go wrapper building/deployment
+rcc.cpp
+rcc.qrc
+rcc_cgo_*.go
+rcc_*.cpp
+rcc__*
+*moc.*
+*moc_*
+
+# Temporary files
+*.swp
+*.swo
+.DS_Store
+*.orig
+*.bak
+
+# Temporary build files
+rcc_cgo_*.go
+darwin
+
+
+# Auto-generates go files.
+*.pb.go
+*.log
+http://wankar.com:3000/kaypi/kaypi_back_geo.git
+
+# Vendor
+vendor/
