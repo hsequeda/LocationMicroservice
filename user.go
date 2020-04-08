@@ -18,8 +18,6 @@ type User struct {
 	H3Positions []int64
 }
 
-var cacheUsers []*User
-
 func NewUser(name string, lat, long float64, category Category) *User {
 	geoCord := h3.GeoCoord{
 		Latitude:  lat,
@@ -52,25 +50,32 @@ func NewUser(name string, lat, long float64, category Category) *User {
 }
 
 func DeleteUser(id int) (*User, error) {
-	panic("Implement me!")
+	return Db.DeleteUser(id)
 }
 
 func UpdateUser(id int, lat float64, long float64) (*User, error) {
-	panic("Implement me!")
+	auxUser := NewUser("", lat, long, Generic)
+	return Db.UpdateUser(id, lat, long, auxUser.H3Positions)
 }
 
 func AddUser(user *User) (*User, error) {
+	id, err := Db.AddUser(user)
+	if err != nil {
+		return nil, err
+	}
+	user.Id = id
 	return user, nil
 }
 
-func GetCloseUsers(lat float64, long float64, resolution int, category Category) ([]*User, error) {
-	panic("Implement me!")
+func GetCloseUsers(lat float64, long float64, resolution int, category string) ([]*User, error) {
+	auxUser := NewUser("", lat, long, Generic)
+	return Db.GetCloseUsers(resolution, auxUser.H3Positions[resolution], category)
 }
 
-func GetAllUsers(category Category) ([]*User, error) {
-	return []*User{NewUser("", 1, 2, Client)}, nil
+func GetAllUsers(category string) ([]*User, error) {
+	return Db.ListUsers(category)
 }
 
 func GetUser(id int) (*User, error) {
-	panic("Implement me!")
+	return Db.GetUser(id)
 }
