@@ -12,13 +12,13 @@ import (
 var Db Storage
 
 const (
-	DB_USER        = "DB_USER"
-	DB_PASS        = "DB_PASS"
-	DB_NAME        = "DB_NAME"
-	DB_HOST        = "DB_HOST"
-	DB_SSLMODE     = "DB_SSL_MODE"
-	ENDPOINT       = "ENDPOINT"
-	SERVER_ADDRESS = "SERVER_ADDRESS"
+	DB_USER        = "rimaydb"
+	DB_PASS        = "Wipaydb8##"
+	DB_NAME        = "geodbv1"
+	DB_HOST        = "localhost"
+	DB_SSLMODE     = "require"
+	ENDPOINT       = "location"
+	SERVER_ADDRESS = "ranti.store:5432"
 )
 
 func init() {
