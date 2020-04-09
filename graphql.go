@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/graphql-go/graphql"
 )
 
@@ -19,8 +20,24 @@ var geoCordType = graphql.NewObject(
 		Description: "Geographical point",
 	})
 
+var categoryEnum = graphql.NewEnum(graphql.EnumConfig{
+	Name: "category",
+	Values: graphql.EnumValueConfigMap{
+		Client: &graphql.EnumValueConfig{
+			Value: Client,
+		},
+		ServiceProvider: &graphql.EnumValueConfig{
+			Value: ServiceProvider,
+		},
+		Generic: &graphql.EnumValueConfig{
+			Value: Generic,
+		},
+	},
+})
+
 var userType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "User",
+
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.ID,
@@ -35,7 +52,7 @@ var userType = graphql.NewObject(graphql.ObjectConfig{
 			Description: "User name",
 		},
 		"category": &graphql.Field{
-			Type:        graphql.String,
+			Type:        categoryEnum,
 			Description: "Category of User Ex(CLIENT,SERVICE_PROVIDER)",
 		},
 	},
@@ -61,24 +78,24 @@ var queryType = graphql.NewObject(graphql.ObjectConfig{
 				return nil, errors.New("id argument could be missing")
 			},
 		},
-		// Endpoint: /location? query={allUsers(category = "GENERIC": String ){id, name, geo_cord, category}}
+		// Endpoint: /location? query={allUsers(category = generic: string ){id, name, geo_cord, category}}
 		"allUsers": &graphql.Field{
 			Type: graphql.NewList(userType),
 			Description: "Get all users by category.\n" +
 				" Ex:(\"CLIENT\",\"SERVICE_PROVIDER\",\"GENERIC\").\n" +
-				"default_value = \"GENERIC\".\n" +
 				" With \"GENERIC\" returns all users.",
 			Args: graphql.FieldConfigArgument{
 				"category": &graphql.ArgumentConfig{
-					Type:         graphql.String,
-					DefaultValue: Generic,
-					Description:  "Category of User Ex(CLIENT,SERVICE_PROVIDER)",
+					Type:        categoryEnum,
+					Description: "Category of User Ex(CLIENT,SERVICE_PROVIDER)",
 				},
 			},
 			Resolve: func(p graphql.ResolveParams) (i interface{}, err error) {
+				fmt.Println(p.Args)
 				if val, ok := p.Args["category"]; ok {
 					return GetAllUsers(val.(string))
 				}
+
 				return nil, errors.New("category argument could be missing")
 			},
 		},
@@ -96,16 +113,13 @@ var queryType = graphql.NewObject(graphql.ObjectConfig{
 					Description: "Longitude of the origin point",
 				},
 				"resolution": &graphql.ArgumentConfig{
-					Type:         graphql.Int,
-					DefaultValue: 0,
+					Type: graphql.Int,
 					Description: "Scale of the plane in H3 resolution(0-15.\n" +
-						"default_value: 0\n" +
 						"More Info: https://h3geo.org/#/documentation/core-library/resolution-table",
 				},
 				"category": &graphql.ArgumentConfig{
-					Type:         graphql.String,
-					DefaultValue: Generic,
-					Description:  "Category of User Ex(CLIENT,SERVICE_PROVIDER)",
+					Type:        categoryEnum,
+					Description: "Category of User Ex(CLIENT,SERVICE_PROVIDER)",
 				},
 			},
 			Resolve: func(p graphql.ResolveParams) (i interface{}, err error) {
@@ -156,7 +170,7 @@ var mutationType = graphql.NewObject(graphql.ObjectConfig{
 					Description: "Current longitude",
 				},
 				"category": &graphql.ArgumentConfig{
-					Type:        graphql.String,
+					Type:        categoryEnum,
 					Description: "Category of User Ex(CLIENT,SERVICE_PROVIDER)",
 				},
 			},
@@ -180,7 +194,7 @@ var mutationType = graphql.NewObject(graphql.ObjectConfig{
 					return nil, errors.New("name argument could be missing")
 				}
 
-				return AddUser(NewUser(name, lat, long, Category(category)))
+				return AddUser(NewUser(name, lat, long, category))
 			},
 		},
 		// Endpoint: /location?query=mutation+_{updateGeoCord(lat:float, long:float){id, name, geo_cord, category}}
@@ -192,11 +206,11 @@ var mutationType = graphql.NewObject(graphql.ObjectConfig{
 					Type:        graphql.Int,
 					Description: "User ID",
 				},
-				"lat": &graphql.ArgumentConfig{
+				"newLat": &graphql.ArgumentConfig{
 					Type:        graphql.Float,
 					Description: "New latitude",
 				},
-				"long": &graphql.ArgumentConfig{
+				"newLong": &graphql.ArgumentConfig{
 					Type:        graphql.Float,
 					Description: "New longitude",
 				},
@@ -210,11 +224,11 @@ var mutationType = graphql.NewObject(graphql.ObjectConfig{
 					return nil, errors.New("id argument could be missing")
 				}
 
-				if lat, ok = p.Args["originLat"].(float64); !ok {
+				if lat, ok = p.Args["newLat"].(float64); !ok {
 					return nil, errors.New("lat argument could be missing")
 				}
 
-				if long, ok = p.Args["originLong"].(float64); ok {
+				if long, ok = p.Args["newLong"].(float64); !ok {
 					return nil, errors.New("long argument could be missing")
 				}
 

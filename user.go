@@ -1,6 +1,10 @@
 package main
 
-import "github.com/uber/h3-go"
+import (
+	"database/sql"
+	"errors"
+	"github.com/uber/h3-go"
+)
 
 const (
 	Generic         = "GENERIC"
@@ -8,17 +12,15 @@ const (
 	Client          = "CLIENT"
 )
 
-type Category string
-
 type User struct {
 	Id          int         `json:"id"`
 	Name        string      `json:"name"`
-	Category    Category    `json:"category"`
+	Category    string      `json:"category"`
 	GeoCord     h3.GeoCoord `json:"geo_cord"`
 	H3Positions []int64
 }
 
-func NewUser(name string, lat, long float64, category Category) *User {
+func NewUser(name string, lat, long float64, category string) *User {
 	geoCord := h3.GeoCoord{
 		Latitude:  lat,
 		Longitude: long,
@@ -50,15 +52,26 @@ func NewUser(name string, lat, long float64, category Category) *User {
 }
 
 func DeleteUser(id int) (*User, error) {
-	return Db.DeleteUser(id)
+	if user, err := Db.DeleteUser(id); err == sql.ErrNoRows {
+		return nil, errors.New("not found User with inserted id")
+	} else {
+		return user, nil
+	}
 }
 
 func UpdateUser(id int, lat float64, long float64) (*User, error) {
 	auxUser := NewUser("", lat, long, Generic)
-	return Db.UpdateUser(id, lat, long, auxUser.H3Positions)
+	if user, err := Db.UpdateUser(id, lat, long, auxUser.H3Positions); err == sql.ErrNoRows {
+		return nil, errors.New("not found User with inserted id")
+	} else {
+		return user, nil
+	}
 }
 
 func AddUser(user *User) (*User, error) {
+	if user.Category == Generic {
+		return nil, errors.New("GENERIC category cannot by assigned to an User")
+	}
 	id, err := Db.AddUser(user)
 	if err != nil {
 		return nil, err
@@ -69,6 +82,9 @@ func AddUser(user *User) (*User, error) {
 
 func GetCloseUsers(lat float64, long float64, resolution int, category string) ([]*User, error) {
 	auxUser := NewUser("", lat, long, Generic)
+	if resolution < 0 || resolution > 15 {
+		return nil, errors.New("resolution must be a value between 0 and 15. ")
+	}
 	return Db.GetCloseUsers(resolution, auxUser.H3Positions[resolution], category)
 }
 
@@ -77,5 +93,9 @@ func GetAllUsers(category string) ([]*User, error) {
 }
 
 func GetUser(id int) (*User, error) {
-	return Db.GetUser(id)
+	if user, err := Db.GetUser(id); err == sql.ErrNoRows {
+		return nil, errors.New("not found User with inserted id")
+	} else {
+		return user, nil
+	}
 }

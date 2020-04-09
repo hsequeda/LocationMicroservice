@@ -9,8 +9,6 @@ import (
 )
 
 const (
-	SslModeDisable     = "disable"
-	SslModeEnable      = "enable"
 	GET                = "get"
 	GET_CLOSE_WITH_CAT = "getCloseWithCat"
 	GET_CLOSE          = "getClose"
@@ -32,8 +30,14 @@ var stmtMap = map[string]string{
 	"delete":          "delete from \"user\" where id=$1 returning id, name, latitude, longitude, h3index, category",
 }
 
-type SqlDb struct {
-	db *sql.DB
+type stmtConfig struct {
+	stmt  *sql.Stmt
+	query string
+}
+
+type Data struct {
+	db      *sql.DB
+	stmtMap map[string]*stmtConfig
 }
 
 // NewDb construct a new Db type.
@@ -45,22 +49,34 @@ func NewDb(user, password, dbHost, dbName, sslMode string) (Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return &SqlDb{db: db}, nil
+	data := &Data{
+		db: db,
+		stmtMap: map[string]*stmtConfig{
+			GET:                {query: "select * from \"user\" where id=$1"},
+			GET_CLOSE_WITH_CAT: {query: "select * from \"user\" where h3index[$1]=$2 and category=$3"},
+			GET_CLOSE:          {query: "select * from \"user\" where h3index[$1]=$2"},
+			LIST_BY_CAT:        {query: "select * from \"user\" where category=$1"},
+			LIST:               {query: "select * from \"user\""},
+			INSERT:             {query: "insert into \"user\" ( name, latitude, longitude, h3index, category) values( $1, $2, $3, $4, $5) returning id"},
+			UPDATE:             {query: "update \"user\" set latitude=$2, longitude=$3, h3index=$4 where id=$1 returning id, name, latitude, longitude, h3index, category"},
+			DELETE:             {query: "delete from \"user\" where id=$1 returning id, name, latitude, longitude, h3index, category"},
+		},
+	}
+	for key, stmtConf := range data.stmtMap {
+		data.stmtMap[key].stmt, err = data.db.Prepare(stmtConf.query)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return data, nil
 }
 
 // GetUser get an user by its id.
-func (db *SqlDb) GetUser(id int) (*User, error) {
+func (db *Data) GetUser(id int) (*User, error) {
 	log.Print("Getting User")
-	stmt, err := db.db.Prepare(stmtMap[GET])
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
 
 	var user User
-	err = stmt.QueryRow(id).Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
+	err := db.stmtMap[GET].stmt.QueryRow(id).Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
 		&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category)
 	if err != nil {
 		return nil, err
@@ -71,30 +87,18 @@ func (db *SqlDb) GetUser(id int) (*User, error) {
 
 // GetCloseUsers returns a list of users with the same h3IndexPos given a resolution.
 // Can be specified a category or use category = "GENERIC" for all users.
-func (db *SqlDb) GetCloseUsers(resolution int, h3IndexPos int64, category string) (userList []*User, err error) {
+func (db *Data) GetCloseUsers(resolution int, h3IndexPos int64, category string) (userList []*User, err error) {
 	log.Print("Getting Close User")
 
-	var stmt *sql.Stmt
 	var rowIter *sql.Rows
 
 	switch category {
 	case Client, ServiceProvider:
-		stmt, err = db.db.Prepare(stmtMap[GET_CLOSE_WITH_CAT])
-		if err != nil {
-			return nil, err
-		}
-
-		rowIter, err = stmt.Query(resolution+1, h3IndexPos, category)
+		rowIter, err = db.stmtMap[GET_CLOSE_WITH_CAT].stmt.Query(resolution+1, h3IndexPos, category)
 
 	case Generic:
-		stmt, err = db.db.Prepare(stmtMap[GET_CLOSE])
-		if err != nil {
-			return nil, err
-		}
-
-		rowIter, err = stmt.Query(resolution+1, h3IndexPos)
+		rowIter, err = db.stmtMap[GET_CLOSE].stmt.Query(resolution+1, h3IndexPos)
 	}
-	defer stmt.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -112,17 +116,11 @@ func (db *SqlDb) GetCloseUsers(resolution int, h3IndexPos int64, category string
 }
 
 // AddUser Add an user to the data base.
-func (db *SqlDb) AddUser(user *User) (int, error) {
+func (db *Data) AddUser(user *User) (int, error) {
 	log.Print("Adding User")
-	stmt, err := db.db.Prepare(stmtMap[INSERT])
-	if err != nil {
-		return 0, err
-	}
-
-	defer stmt.Close()
 
 	var id int
-	err = stmt.QueryRow(user.Name, user.GeoCord.Latitude, user.GeoCord.Longitude, pq.Array(user.H3Positions), user.Category).Scan(&id)
+	err := db.stmtMap[INSERT].stmt.QueryRow(user.Name, user.GeoCord.Latitude, user.GeoCord.Longitude, pq.Array(user.H3Positions), user.Category).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -131,29 +129,17 @@ func (db *SqlDb) AddUser(user *User) (int, error) {
 }
 
 // ListUsers get all users by a category. Returns all users if category="GENERIC".
-func (db *SqlDb) ListUsers(category string) (userList []*User, err error) {
+func (db *Data) ListUsers(category string) (userList []*User, err error) {
 	log.Print("Getting all User")
-	var stmt *sql.Stmt
 	var rowIter *sql.Rows
 
 	switch category {
 	case Client, ServiceProvider:
-		stmt, err = db.db.Prepare(stmtMap[LIST_BY_CAT])
-		if err != nil {
-			return nil, err
-		}
-
-		rowIter, err = stmt.Query(category)
+		rowIter, err = db.stmtMap[LIST_BY_CAT].stmt.Query(category)
 
 	case Generic:
-		stmt, err = db.db.Prepare(stmtMap[LIST])
-		if err != nil {
-			return nil, err
-		}
-
-		rowIter, err = stmt.Query()
+		rowIter, err = db.stmtMap[LIST].stmt.Query()
 	}
-	defer stmt.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -171,17 +157,11 @@ func (db *SqlDb) ListUsers(category string) (userList []*User, err error) {
 }
 
 // DeleteUser remove an user by its id.
-func (db *SqlDb) DeleteUser(id int) (*User, error) {
+func (db *Data) DeleteUser(id int) (*User, error) {
 	log.Print("Removing User")
-	stmt, err := db.db.Prepare(stmtMap[DELETE])
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
 
 	var user User
-	err = stmt.QueryRow(id).Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
+	err := db.stmtMap[DELETE].stmt.QueryRow(id).Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
 		&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category)
 	if err != nil {
 		return nil, err
@@ -191,18 +171,10 @@ func (db *SqlDb) DeleteUser(id int) (*User, error) {
 }
 
 // UpdateUser update the geo-position of an user.
-func (db *SqlDb) UpdateUser(id int, latitude, longitude float64, h3Positions []int64) (*User, error) {
+func (db *Data) UpdateUser(id int, latitude, longitude float64, h3Positions []int64) (*User, error) {
 	log.Print("Updating User")
-	stmt, err := db.db.Prepare(stmtMap[UPDATE])
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
 	var user User
-
-	err = stmt.QueryRow(id, latitude, longitude, pq.Array(h3Positions)).Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
+	err := db.stmtMap[UPDATE].stmt.QueryRow(id, latitude, longitude, pq.Array(h3Positions)).Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
 		&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category)
 	if err != nil {
 		return nil, err
@@ -212,7 +184,13 @@ func (db *SqlDb) UpdateUser(id int, latitude, longitude float64, h3Positions []i
 }
 
 // Close close the database.
-func (db *SqlDb) Close() error {
+func (db *Data) Close() error {
 	log.Print("Closing database")
+	// Closing all stataments
+	for s := range db.stmtMap {
+		if err := db.stmtMap[s].stmt.Close(); err != nil {
+			return err
+		}
+	}
 	return db.db.Close()
 }
