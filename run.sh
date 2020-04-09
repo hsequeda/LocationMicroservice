@@ -2,7 +2,7 @@
 # postgres username
  export      DB_USER="postgres"
 # user password
- export      DB_PASS="passwordEx"
+ export      DB_PASS="nightmare666"
 # name of the database
  export      DB_NAME="location"
 # host
