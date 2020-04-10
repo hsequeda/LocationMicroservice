@@ -67,5 +67,3 @@ darwin
 *.log
 http://wankar.com:3000/kaypi/kaypi_back_geo.git
 
-# Vendor
-vendor/

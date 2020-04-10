@@ -12,6 +12,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H4=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
+github.com/uber/h3-go v3.0.0+incompatible h1:XFJ//ciJE0lRTn6n/vN7VWYXFM0ifKYYKP+04YtVNZI=
+github.com/uber/h3-go v3.0.0+incompatible/go.mod h1:66a2M4rQlf+dtkTWj3bHoLFgDT/Rt4kLT8dMuEQVQvw=
 github.com/uber/h3-go v3.0.1+incompatible h1:RVpBm8qd7mM94YuIhNQfCXpVj6mPY6gNsVstDg1FvjY=
 github.com/uber/h3-go v3.0.1+incompatible/go.mod h1:66a2M4rQlf+dtkTWj3bHoLFgDT/Rt4kLT8dMuEQVQvw=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=

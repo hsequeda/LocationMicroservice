@@ -17,28 +17,33 @@ Go to the file:
 cd kaypi_back_geo/
 ``
 
-Install go dependencies: 
-``
-go mod vendor
-``
-
 #Run Test
-Run this command int the application directory (environment vars are necessary):
-``
-go test ./
-``
+##Manually
+Export the environment vars to connect with the postgresql database:
+
+    export	 DB_USER //postgres username
+    export	 DB_PASS //user password
+    export	 DB_NAME //name of the database
+    export	 DB_HOST // host
+    export   DB_SSL_MODE //ssl mode
+    export	 ENDPOINT // endpoint of the application Ex( /location )
+    export	 SERVER_ADDRESS server address Ex( localhost:8080 )
+	 
+Run the fallow command to run the application:	 ``go test ./``
+##Using the test.sh script
+Open the `test.sh` script and change the values of the environment vars and test `sh test.sh`.
 
 #Run Application
 ##Manually
 Export the environment vars to connect with the postgresql database:
 
-	 DB_USER //postgres username
-	 DB_PASS //user password
-	 DB_NAME //name of the database
-	 DB_HOST // host
-	 DB_SSL_MODE //ssl mode
-	 ENDPOINT // endpoint of the application Ex( /location )
-	 SERVER_ADDRESS server address Ex( localhost:8080 )
+    export	 DB_USER //postgres username
+    export	 DB_PASS //user password
+    export	 DB_NAME //name of the database
+    export	 DB_HOST // host
+    export   DB_SSL_MODE //ssl mode
+    export	 ENDPOINT // endpoint of the application Ex( /location )
+    export	 SERVER_ADDRESS server address Ex( localhost:8080 )
 	 
 Run the fallow command to run the application:	 ``go run ./``
 ##Using the run.sh script
@@ -120,3 +125,6 @@ UpdateGeoCord: update the the geographical coordinates of the User.
         newLat: Float
         newLong: Float
       ): User 
+      
+#Examples
+    Look in the QueryScreenShots folder. There you can find a .jpg file for each query and mutation.
