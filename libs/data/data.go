@@ -1,10 +1,11 @@
-package main
+package data
 
 import (
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
-	_ "github.com/lib/pq"
+	"locationMicroService/libs/actors"
+	"locationMicroService/libs/core"
 	"log"
 )
 
@@ -19,16 +20,13 @@ const (
 	UPDATE             = "update"
 )
 
-var stmtMap = map[string]string{
-	"get":             "select * from \"user\" where id=$1",
-	"getCloseWithCat": "select * from \"user\" where h3index[$1]=$2 and category=$3",
-	"getClose":        "select * from \"user\" where h3index[$1]=$2",
-	"listByCat":       "select * from \"user\" where category=$1",
-	"list":            "select * from \"user\"",
-	"insert":          "insert into \"user\" ( name, latitude, longitude, h3index, category) values( $1, $2, $3, $4, $5) returning id",
-	"update":          "update \"user\" set latitude=$2, longitude=$3, h3index=$4 where id=$1 returning id, name, latitude, longitude, h3index, category",
-	"delete":          "delete from \"user\" where id=$1 returning id, name, latitude, longitude, h3index, category",
-}
+const (
+	DB_USER    = "DB_USER"
+	DB_PASS    = "DB_PASS"
+	DB_NAME    = "DB_NAME"
+	DB_HOST    = "DB_HOST"
+	DB_SSLMODE = "DB_SSL_MODE"
+)
 
 type stmtConfig struct {
 	stmt  *sql.Stmt
@@ -41,7 +39,7 @@ type Data struct {
 }
 
 // NewDb construct a new Db type.
-func NewDb(user, password, dbHost, dbName, sslMode string) (Storage, error) {
+func NewDb(user, password, dbHost, dbName, sslMode string) (core.Storage, error) {
 	log.Print("Creating Database")
 	db, err := sql.Open("postgres",
 		fmt.Sprintf("user=%s password=%s host=%s dbname=%s sslmode=%s",
@@ -72,10 +70,10 @@ func NewDb(user, password, dbHost, dbName, sslMode string) (Storage, error) {
 }
 
 // GetUser get an user by its id.
-func (db *Data) GetUser(id int) (*User, error) {
+func (db *Data) GetUser(id int) (*actors.User, error) {
 	log.Print("Getting User")
 
-	var user User
+	var user actors.User
 	err := db.stmtMap[GET].stmt.QueryRow(id).Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
 		&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category)
 	if err != nil {
@@ -87,16 +85,16 @@ func (db *Data) GetUser(id int) (*User, error) {
 
 // GetCloseUsers returns a list of users with the same h3IndexPos given a resolution.
 // Can be specified a category or use category = "GENERIC" for all users.
-func (db *Data) GetCloseUsers(resolution int, h3IndexPos int64, category string) (userList []*User, err error) {
+func (db *Data) GetCloseUsers(resolution int, h3IndexPos int64, category string) (userList []*actors.User, err error) {
 	log.Print("Getting Close User")
 
 	var rowIter *sql.Rows
 
 	switch category {
-	case Client, ServiceProvider:
+	case actors.Client, actors.ServiceProvider:
 		rowIter, err = db.stmtMap[GET_CLOSE_WITH_CAT].stmt.Query(resolution+1, h3IndexPos, category)
 
-	case Generic:
+	case actors.Generic:
 		rowIter, err = db.stmtMap[GET_CLOSE].stmt.Query(resolution+1, h3IndexPos)
 	}
 	if err != nil {
@@ -104,7 +102,7 @@ func (db *Data) GetCloseUsers(resolution int, h3IndexPos int64, category string)
 	}
 
 	for rowIter.Next() {
-		var user User
+		var user actors.User
 		err = rowIter.Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
 			&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category)
 		if err != nil {
@@ -116,7 +114,7 @@ func (db *Data) GetCloseUsers(resolution int, h3IndexPos int64, category string)
 }
 
 // AddUser Add an user to the data base.
-func (db *Data) AddUser(user *User) (int, error) {
+func (db *Data) AddUser(user *actors.User) (int, error) {
 	log.Print("Adding User")
 
 	var id int
@@ -129,15 +127,15 @@ func (db *Data) AddUser(user *User) (int, error) {
 }
 
 // ListUsers get all users by a category. Returns all users if category="GENERIC".
-func (db *Data) ListUsers(category string) (userList []*User, err error) {
+func (db *Data) ListUsers(category string) (userList []*actors.User, err error) {
 	log.Print("Getting all User")
 	var rowIter *sql.Rows
 
 	switch category {
-	case Client, ServiceProvider:
+	case actors.Client, actors.ServiceProvider:
 		rowIter, err = db.stmtMap[LIST_BY_CAT].stmt.Query(category)
 
-	case Generic:
+	case actors.Generic:
 		rowIter, err = db.stmtMap[LIST].stmt.Query()
 	}
 	if err != nil {
@@ -145,7 +143,7 @@ func (db *Data) ListUsers(category string) (userList []*User, err error) {
 	}
 
 	for rowIter.Next() {
-		var user User
+		var user actors.User
 		err = rowIter.Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
 			&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category)
 		if err != nil {
@@ -157,10 +155,10 @@ func (db *Data) ListUsers(category string) (userList []*User, err error) {
 }
 
 // DeleteUser remove an user by its id.
-func (db *Data) DeleteUser(id int) (*User, error) {
+func (db *Data) DeleteUser(id int) (*actors.User, error) {
 	log.Print("Removing User")
 
-	var user User
+	var user actors.User
 	err := db.stmtMap[DELETE].stmt.QueryRow(id).Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
 		&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category)
 	if err != nil {
@@ -171,9 +169,9 @@ func (db *Data) DeleteUser(id int) (*User, error) {
 }
 
 // UpdateUser update the geo-position of an user.
-func (db *Data) UpdateUser(id int, latitude, longitude float64, h3Positions []int64) (*User, error) {
+func (db *Data) UpdateUser(id int, latitude, longitude float64, h3Positions []int64) (*actors.User, error) {
 	log.Print("Updating User")
-	var user User
+	var user actors.User
 	err := db.stmtMap[UPDATE].stmt.QueryRow(id, latitude, longitude, pq.Array(h3Positions)).Scan(&user.Id, &user.Name, &user.GeoCord.Latitude,
 		&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category)
 	if err != nil {

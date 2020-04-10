@@ -1,9 +1,10 @@
-package main
+package server
 
 import (
 	"errors"
 	"fmt"
 	"github.com/graphql-go/graphql"
+	"locationMicroService/libs/actors"
 )
 
 var geoCordType = graphql.NewObject(
@@ -23,14 +24,14 @@ var geoCordType = graphql.NewObject(
 var categoryEnum = graphql.NewEnum(graphql.EnumConfig{
 	Name: "category",
 	Values: graphql.EnumValueConfigMap{
-		Client: &graphql.EnumValueConfig{
-			Value: Client,
+		actors.Client: &graphql.EnumValueConfig{
+			Value: actors.Client,
 		},
-		ServiceProvider: &graphql.EnumValueConfig{
-			Value: ServiceProvider,
+		actors.ServiceProvider: &graphql.EnumValueConfig{
+			Value: actors.ServiceProvider,
 		},
-		Generic: &graphql.EnumValueConfig{
-			Value: Generic,
+		actors.Generic: &graphql.EnumValueConfig{
+			Value: actors.Generic,
 		},
 	},
 })
@@ -58,7 +59,7 @@ var userType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-var queryType = graphql.NewObject(graphql.ObjectConfig{
+var QueryType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Query",
 	Fields: graphql.Fields{
 		// Endpoint: /location?query={user(id: int ){name, geo_cord, category}}
@@ -150,7 +151,7 @@ var queryType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-var mutationType = graphql.NewObject(graphql.ObjectConfig{
+var MutationType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Mutation",
 	Fields: graphql.Fields{
 		// Endpoint: /location?query=mutation+_{addUser(name:String, lat:float, long:float, category: String){id, name, geo_cord, category}}
@@ -194,7 +195,7 @@ var mutationType = graphql.NewObject(graphql.ObjectConfig{
 					return nil, errors.New("name argument could be missing")
 				}
 
-				return AddUser(NewUser(name, lat, long, category))
+				return AddUser(actors.NewUser(name, lat, long, category))
 			},
 		},
 		// Endpoint: /location?query=mutation+_{updateGeoCord(lat:float, long:float){id, name, geo_cord, category}}

@@ -24,4 +24,5 @@ echo "application address = '${SERVER_ADDRESS}'"
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 echo "Testing..."
-go test "${DIR}"/
+go test "${DIR}"/../libs/data/
+

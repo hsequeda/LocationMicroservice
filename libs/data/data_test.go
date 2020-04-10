@@ -1,21 +1,34 @@
-package main
+package data
 
 import (
 	"github.com/stretchr/testify/require"
 	"github.com/uber/h3-go"
+	"locationMicroService/libs/actors"
+	"locationMicroService/libs/core"
+	"os"
 	"strings"
 	"testing"
 )
 
+func initTest() (core.Storage, error) {
+	return NewDb(os.Getenv(DB_USER),
+		os.Getenv(DB_PASS),
+		os.Getenv(DB_HOST),
+		os.Getenv(DB_NAME),
+		os.Getenv(DB_SSLMODE))
+}
 func TestSqlDb_AddUser(t *testing.T) {
-	id, err := Db.AddUser(NewUser("Test_Mario Benedetti", -32.8181, -56.5064, ServiceProvider))
+	Db, err := initTest()
+	require.NoError(t, err)
+	defer CloseTest(t, Db)
+	id, err := Db.AddUser(actors.NewUser("Test_Mario Benedetti", -32.8181, -56.5064, actors.ServiceProvider))
 	require.NotEqual(t, id, 0)
 	require.NoError(t, err)
 
 	user, err := Db.GetUser(id)
 	require.NoError(t, err)
 	require.Equal(t, user.Id, id)
-	require.Equal(t, user.Category, ServiceProvider)
+	require.Equal(t, user.Category, actors.ServiceProvider)
 	require.Equal(t, user.GeoCord.Latitude, -32.8181)
 	require.Equal(t, user.GeoCord.Longitude, -56.5064)
 	require.Equal(t, len(user.H3Positions), 16)
@@ -23,7 +36,7 @@ func TestSqlDb_AddUser(t *testing.T) {
 	user1, err := Db.DeleteUser(id)
 	require.NoError(t, err)
 	require.Equal(t, user1.Id, id)
-	require.Equal(t, user1.Category, ServiceProvider)
+	require.Equal(t, user1.Category, actors.ServiceProvider)
 	require.Equal(t, user1.GeoCord.Latitude, -32.8181)
 	require.Equal(t, user1.GeoCord.Longitude, -56.5064)
 	require.Equal(t, len(user1.H3Positions), 16)
@@ -32,20 +45,22 @@ func TestSqlDb_AddUser(t *testing.T) {
 
 func TestSqlDb_ListUsers(t *testing.T) {
 	var err error
-
-	user1 := NewUser("Test_Ruben Dario", 12.732229, -86.123326, Client)
+	Db, err := initTest()
+	require.NoError(t, err)
+	defer CloseTest(t, Db)
+	user1 := actors.NewUser("Test_Ruben Dario", 12.732229, -86.123326, actors.Client)
 	user1.Id, err = Db.AddUser(user1)
 	require.NoError(t, err)
 
-	user2 := NewUser("Test_Mario Benedetti", -32.8181, -56.5064, ServiceProvider)
+	user2 := actors.NewUser("Test_Mario Benedetti", -32.8181, -56.5064, actors.ServiceProvider)
 	user2.Id, err = Db.AddUser(user2)
 	require.NoError(t, err)
-	user3 := NewUser("Test_Pablo Neruda", -36.143747, -71.827252, Client)
+	user3 := actors.NewUser("Test_Pablo Neruda", -36.143747, -71.827252, actors.Client)
 	user3.Id, err = Db.AddUser(user3)
 	require.NoError(t, err)
 
 	t.Log("List with category")
-	userList, err := Db.ListUsers(Generic)
+	userList, err := Db.ListUsers(actors.Generic)
 	require.NoError(t, err)
 	require.Equal(t, len(userList), 3)
 
@@ -80,10 +95,13 @@ func TestSqlDb_ListUsers(t *testing.T) {
 
 func TestSqlDb_UpdateUser(t *testing.T) {
 	var err error
-	user1 := NewUser("Test_Ruben Dario", 12.732229, -86.123326, Client)
+	Db, err := initTest()
+	require.NoError(t, err)
+	defer CloseTest(t, Db)
+	user1 := actors.NewUser("Test_Ruben Dario", 12.732229, -86.123326, actors.Client)
 	user1.Id, err = Db.AddUser(user1)
 	require.NoError(t, err)
-	userToUpdate := NewUser(user1.Name, user1.GeoCord.Latitude+1, user1.GeoCord.Longitude-1, user1.Category)
+	userToUpdate := actors.NewUser(user1.Name, user1.GeoCord.Latitude+1, user1.GeoCord.Longitude-1, user1.Category)
 
 	newUser, err := Db.UpdateUser(user1.Id, userToUpdate.GeoCord.Latitude, userToUpdate.GeoCord.Longitude, userToUpdate.H3Positions)
 	require.NoError(t, err)
@@ -97,42 +115,43 @@ func TestSqlDb_UpdateUser(t *testing.T) {
 
 func TestSqlDb_GetCloseUsers(t *testing.T) {
 	var err error
-	user1 := NewUser("Test_Ruben Dario", 12.732229, -86.123326, Client)
+	Db, err := initTest()
+	require.NoError(t, err)
+	defer CloseTest(t, Db)
+	user1 := actors.NewUser("Test_Ruben Dario", 12.732229, -86.123326, actors.Client)
 	user1.Id, err = Db.AddUser(user1)
 	require.NoError(t, err)
 
-	user2 := NewUser("Test_Mario Benedetti", -32.8181, -56.5064, ServiceProvider)
+	user2 := actors.NewUser("Test_Mario Benedetti", -32.8181, -56.5064, actors.ServiceProvider)
 	user2.Id, err = Db.AddUser(user2)
 	require.NoError(t, err)
 
-	user3 := NewUser("Test_Pablo Neruda", -36.143747, -71.827252, Client)
+	user3 := actors.NewUser("Test_Pablo Neruda", -36.143747, -71.827252, actors.Client)
 	user3.Id, err = Db.AddUser(user3)
 	require.NoError(t, err)
 
-	user4 := NewUser("Test_Victor Jara", -36.534865, -72.434204, ServiceProvider)
+	user4 := actors.NewUser("Test_Victor Jara", -36.534865, -72.434204, actors.ServiceProvider)
 	user4.Id, err = Db.AddUser(user4)
 	require.NoError(t, err)
 
 	resolution := 1
-	userList, err := Db.GetCloseUsers(resolution, user3.H3Positions[resolution], Generic)
+	userList, err := Db.GetCloseUsers(resolution, user3.H3Positions[resolution], actors.Generic)
 	require.NoError(t, err)
 	require.Len(t, userList, 2)
 
-	userList1, err := Db.GetCloseUsers(resolution, user1.H3Positions[resolution], Client)
+	userList1, err := Db.GetCloseUsers(resolution, user1.H3Positions[resolution], actors.Client)
 	require.NoError(t, err)
 	require.Len(t, userList1, 1)
 }
 
-func TestSqlDb_Close(t *testing.T) {
-	t.Cleanup(func() {
-		users, err := Db.ListUsers(Generic)
-		require.NoError(t, err)
-		for i := range users {
-			if strings.Split(users[i].Name, "_")[0] == "Test" {
-				_, err := Db.DeleteUser(users[i].Id)
-				require.NoError(t, err)
-			}
+func CloseTest(t *testing.T, Db core.Storage) {
+	users, err := Db.ListUsers(actors.Generic)
+	require.NoError(t, err)
+	for i := range users {
+		if strings.Split(users[i].Name, "_")[0] == "Test" {
+			_, err := Db.DeleteUser(users[i].Id)
+			require.NoError(t, err)
 		}
-		defer Db.Close()
-	})
+	}
+	defer Db.Close()
 }
