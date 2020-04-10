@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # postgres username
- export      DB_USER="postgres"
+ export      DB_USER="rimaydb"
 # user password
- export      DB_PASS="XXXXXXXX"
+ export      DB_PASS="Wipaydb8##"
 # name of the database
- export      DB_NAME="location"
+ export      DB_NAME="geodbv1"
 # host
  export      DB_HOST="localhost"
 # ssl mode ("enable" or "disable")
