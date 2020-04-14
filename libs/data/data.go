@@ -12,6 +12,7 @@ import (
 const (
 	GET_USER           = "get"
 	GET_ADMIN          = "getAdmin"
+	GET_ADMIN_BY_ID    = "getAdminById"
 	GET_CLOSE_WITH_CAT = "getCloseWithCat"
 	GET_CLOSE          = "getClose"
 	LIST               = "list"
@@ -19,6 +20,7 @@ const (
 	DELETE             = "delete"
 	INSERT             = "insert"
 	UPDATE             = "update"
+	UPDATE_ADMIN       = "updateAdmin"
 	UPDATE_REFTOKEN    = "updateRefreshToken"
 )
 
@@ -54,12 +56,14 @@ func NewDb(user, password, dbHost, dbName, sslMode string) (core.Storage, error)
 		stmtMap: map[string]*stmtConfig{
 			GET_USER:           {query: "select * from \"user\" where id=$1"},
 			GET_ADMIN:          {query: "select * from \"admin\" where username=$1"},
+			GET_ADMIN_BY_ID:    {query: "select * from \"admin\" where id=$1"},
 			GET_CLOSE_WITH_CAT: {query: "select * from \"user\" where h3index[$1]=$2 and category=$3"},
 			GET_CLOSE:          {query: "select * from \"user\" where h3index[$1]=$2"},
 			LIST_BY_CAT:        {query: "select * from \"user\" where category=$1"},
 			LIST:               {query: "select * from \"user\""},
 			INSERT:             {query: "insert into \"user\" ( refreshToken, latitude, longitude, h3index, category,admin_id) values( $1, $2, $3, $4, $5, $6) returning id"},
 			UPDATE:             {query: "update \"user\" set latitude=$2, longitude=$3, h3index=$4 where id=$1 returning id, refreshToken, latitude, longitude, h3index, category"},
+			UPDATE_ADMIN:       {query: "update \"admin\" set passwordhash where id=$1 "},
 			UPDATE_REFTOKEN:    {query: "update \"user\" set refreshToken=$2 where id=$1 returning refreshToken"},
 			DELETE:             {query: "delete from \"user\" where id=$1 returning id, refreshToken, latitude, longitude, h3index, category"},
 		},
@@ -220,4 +224,22 @@ func (db *Data) GetAdmin(name string) (*actors.Admin, error) {
 	}
 
 	return &admin, nil
+}
+
+func (db *Data) GetAdminById(id int) (*actors.Admin, error) {
+	log.Print("Getting Admin by id")
+
+	var admin actors.Admin
+	err := db.stmtMap[GET_ADMIN_BY_ID].stmt.QueryRow(id).Scan(&admin.Id, &admin.UserName, &admin.PassHash)
+	if err != nil {
+		return nil, err
+	}
+
+	return &admin, nil
+}
+
+func (db *Data) UpdateAdminPassHash(id int, newPassHash string) error {
+	log.Print("udating the admin password hash")
+	_, err := db.stmtMap[UPDATE_ADMIN].stmt.Exec(id, newPassHash)
+	return err
 }

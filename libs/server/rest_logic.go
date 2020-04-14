@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -151,6 +152,96 @@ func endpointGetRefreshTokenFromClient(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(w).Encode(user.RefreshToken); err != nil {
 		http.Error(w, "error returning token", http.StatusInternalServerError)
+		return
+	}
+}
+
+func endpointChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
+	tokenStr, err := getTokenFromHeader(r.Context().Value("token").(string))
+	if err != nil {
+		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		return
+	}
+	claimsMap, err := verifyToken(tokenStr)
+	if err != nil {
+		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		return
+	}
+
+	adminId, err := getAdminDataFromClaims(claimsMap)
+	if err != nil {
+		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		return
+	}
+
+	var changePasswordParams struct {
+		LastPassword string `json:"last_password"`
+		NewPassword  string `json:"new_password"`
+	}
+
+	if err = json.NewDecoder(r.Body).Decode(&changePasswordParams); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	admin, err := Db.GetAdminById(adminId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "not found admin with that id", http.StatusBadRequest)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	if err := util.VerifyPassword(changePasswordParams.LastPassword, admin.PassHash); err != nil {
+		http.Error(w, "password not match", http.StatusBadRequest)
+		return
+	}
+
+	newPasswordHash, err := util.GeneratePasswordHash(changePasswordParams.NewPassword)
+	if err != nil {
+		http.Error(w, "error generating new Password", http.StatusInternalServerError)
+		return
+	}
+	if err := Db.UpdateAdminPassHash(adminId, newPasswordHash); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func endpointDeleteUser(w http.ResponseWriter, r *http.Request) {
+	tokenStr, err := getTokenFromHeader(r.Context().Value("token").(string))
+	if err != nil {
+		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		return
+	}
+	claimsMap, err := verifyToken(tokenStr)
+	if err != nil {
+		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		return
+	}
+
+	_, err = getAdminDataFromClaims(claimsMap)
+	if err != nil {
+		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		return
+	}
+
+	var userId struct {
+		Id int `json:"id"`
+	}
+	if err = json.NewDecoder(r.Body).Decode(&userId); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err = Db.DeleteUser(userId.Id); err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "not found user with that id", http.StatusBadRequest)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 }

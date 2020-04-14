@@ -20,6 +20,10 @@ type Storage interface {
 	DeleteUser(id int) (*actors.User, error)
 	// Close close the database.
 	Close() error
-	// GetAdmin return an admin by its id.
+	// GetAdmin return an admin by its username.
 	GetAdmin(name string) (*actors.Admin, error)
+	// GetAdmin return an admin by its id.
+	GetAdminById(id int) (*actors.Admin, error)
+	// UpdateAdminPass update the admin passwordHash
+	UpdateAdminPassHash(id int, newPassHash string) error
 }

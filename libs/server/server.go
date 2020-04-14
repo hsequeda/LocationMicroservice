@@ -70,11 +70,13 @@ func Start() {
 		GraphiQL: true,
 	})
 	r := mux.NewRouter()
-	auth := r.PathPrefix("/auth").Subrouter()
+	auth := r.PathPrefix("/admin").Subrouter()
 	auth.Use(headerAuthorization, disableCORS)
 	auth.HandleFunc("/login", endpointLoginAdmin).Methods("POST")
 	auth.HandleFunc("/registerUser", endpointRegisterUser).Methods("POST")
 	auth.HandleFunc("/getRefreshToken", endpointGetRefreshTokenFromClient).Methods("POST")
+	auth.HandleFunc("/changePassword", endpointChangeAdminPassword).Methods("POST")
+	auth.HandleFunc("/deleteUser", endpointDeleteUser).Methods("POST")
 	r.Handle(os.Getenv(ENDPOINT), headerAuthorization(disableCORS(h)))
 	r.Handle("/subscriptions", wsHandler)
 
