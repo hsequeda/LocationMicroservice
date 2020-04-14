@@ -14,8 +14,12 @@ type Storage interface {
 	ListUsers(category string) ([]*actors.User, error)
 	// UpdateUser update the geo-position of an user.
 	UpdateUser(id int, latitude, longitude float64, h3Positions []int64) (*actors.User, error)
+	// UpdateRefreshToken update an user refresh token by its id.
+	UpdateRefreshToken(id int, token string) error
 	// DeleteUser remove an user by its id.
 	DeleteUser(id int) (*actors.User, error)
 	// Close close the database.
 	Close() error
+	// GetAdmin return an admin by its id.
+	GetAdmin(name string) (*actors.Admin, error)
 }

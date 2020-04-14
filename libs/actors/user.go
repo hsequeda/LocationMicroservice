@@ -11,23 +11,26 @@ const (
 )
 
 type User struct {
-	Id          int         `json:"id"`
-	Name        string      `json:"name"`
-	Category    string      `json:"category"`
-	GeoCord     h3.GeoCoord `json:"geo_cord"`
-	H3Positions []int64
+	Id           int         `json:"id"`
+	Category     string      `json:"category"`
+	GeoCord      h3.GeoCoord `json:"geo_cord"`
+	TempToken    string      `json:"temp_token"`
+	RefreshToken string
+	H3Positions  []int64
+	AdminId      int
 }
 
-func NewUser(name string, lat, long float64, category string) *User {
+func NewUser(refreshToken string, lat, long float64, category string, adminId int) *User {
 	geoCord := h3.GeoCoord{
 		Latitude:  lat,
 		Longitude: long,
 	}
 
 	return &User{
-		Name:     name,
-		Category: category,
-		GeoCord:  geoCord,
+		RefreshToken: refreshToken,
+		Category:     category,
+		GeoCord:      geoCord,
+		AdminId:      adminId,
 		H3Positions: []int64{
 			0:  int64(h3.FromGeo(geoCord, 0)),
 			1:  int64(h3.FromGeo(geoCord, 1)),

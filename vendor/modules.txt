@@ -1,6 +1,21 @@
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+## explicit
+github.com/dgrijalva/jwt-go
+# github.com/functionalfoundry/graphqlws v0.0.0-20191101082150-d5b34b91e6c5
+## explicit
+github.com/functionalfoundry/graphqlws
+# github.com/google/uuid v1.1.1
+## explicit
+github.com/google/uuid
+# github.com/gorilla/mux v1.7.4
+## explicit
+github.com/gorilla/mux
+# github.com/gorilla/websocket v1.4.2
+## explicit
+github.com/gorilla/websocket
 # github.com/graphql-go/graphql v0.7.9
 ## explicit
 github.com/graphql-go/graphql
@@ -17,13 +32,26 @@ github.com/graphql-go/graphql/language/visitor
 # github.com/graphql-go/handler v0.2.3
 ## explicit
 github.com/graphql-go/handler
+# github.com/konsorten/go-windows-terminal-sequences v1.0.1
+github.com/konsorten/go-windows-terminal-sequences
 # github.com/lib/pq v1.3.0
 ## explicit
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
+# github.com/mattn/go-colorable v0.1.6
+## explicit
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.12
+github.com/mattn/go-isatty
+# github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
+## explicit
+github.com/mgutz/ansi
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
+# github.com/sirupsen/logrus v1.5.0
+## explicit
+github.com/sirupsen/logrus
 # github.com/stretchr/testify v1.5.1
 ## explicit
 github.com/stretchr/testify/assert
@@ -31,5 +59,16 @@ github.com/stretchr/testify/require
 # github.com/uber/h3-go v3.0.1+incompatible
 ## explicit
 github.com/uber/h3-go
+# github.com/x-cray/logrus-prefixed-formatter v0.5.2
+## explicit
+github.com/x-cray/logrus-prefixed-formatter
+# golang.org/x/crypto v0.0.0-20200406173513-056763e48d71
+## explicit
+golang.org/x/crypto/bcrypt
+golang.org/x/crypto/blowfish
+golang.org/x/crypto/ssh/terminal
+# golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae
+golang.org/x/sys/unix
+golang.org/x/sys/windows
 # gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2
