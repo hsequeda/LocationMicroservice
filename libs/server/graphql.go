@@ -145,7 +145,7 @@ var MutationType = graphql.NewObject(graphql.ObjectConfig{
 		// Endpoint: /location?query=mutation+_{getUserTempToken(){id, name,geo_cord, category }}
 		"getUserTempToken": &graphql.Field{
 			Type:        graphql.String,
-			Description: fmt.Sprintf("Return a temporal with a duration of %s", tempTokenExp), // TODO
+			Description: fmt.Sprintf("Return an temporary access token"),
 			Args: graphql.FieldConfigArgument{
 				"refreshToken": &graphql.ArgumentConfig{
 					Type: graphql.NewNonNull(graphql.String),

@@ -7,17 +7,13 @@ import (
 	"strings"
 )
 
-var secret = "Maria"         // Implement me!
-var refreshTokenExp = "360h" // Implement me!
-var tempTokenExp = "15m"     // Implement me!
-
 var errInvalidToken = errors.New(" invalid token!")
 var errInvalidRefreshToken = errors.New(" invalid refresh token!")
 var errAuthHeaderInvalid = errors.New(" header Authorization invalid!")
 
 func createToken(claims jwt.MapClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secret))
+	return token.SignedString([]byte(config.secret))
 }
 
 func verifyToken(tokenStr string) (jwt.MapClaims, error) {
@@ -25,7 +21,7 @@ func verifyToken(tokenStr string) (jwt.MapClaims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return false, errInvalidToken
 		}
-		return []byte(secret), nil
+		return []byte(config.secret), nil
 	})
 	if err != nil {
 		log.Printf("invalid token error: %s", err)

@@ -190,18 +190,13 @@ func GetUserTempToken(params graphql.ResolveParams) (interface{}, error) {
 		return nil, errInvalidRefreshToken
 	}
 
-	exp, err := time.ParseDuration(tempTokenExp)
-	if err != nil {
-		return nil, err
-	}
-
 	return createToken(jwt.MapClaims{
 		"id":       strconv.Itoa(id),
 		"category": user.Category,
-		"type":     "TempToken",
-		"role":     "User",
+		"type":     TEMP_TOKEN_TYPE,
+		"role":     USER_ROLE,
 		"iat":      time.Now().Unix(),
-		"exp":      time.Now().Add(exp).Unix(),
+		"exp":      time.Now().Add(config.tempTokenExp).Unix(),
 	})
 }
 
