@@ -14,11 +14,11 @@
 # server address Ex(localhost:8080)
  export      SERVER_ADDRESS=":8080"
  # refresh token expiration (in hours)
- export REFRESH_TOKEN_EXP ="360h"
+ export     REFRESH_TOKEN_EXP="360h"
  # access token expiration(in minutes or in hours)
- export TEMP_TOKEN_EXP ="15m"
+ export     TEMP_TOKEN_EXP="15m"
  # json web token secret
- export SECRET ="XXXXX"
+ export     SECRET="XXXXX"
 
 echo "user = '${DB_USER}'"
 if [ -z "${DB_PASS}" ] ;then echo "user password = 'empty'";else echo "user password = 'xxxxxxxx'";fi
