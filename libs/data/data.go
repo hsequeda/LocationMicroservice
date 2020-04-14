@@ -63,7 +63,7 @@ func NewDb(user, password, dbHost, dbName, sslMode string) (core.Storage, error)
 			LIST:               {query: "select * from \"user\""},
 			INSERT:             {query: "insert into \"user\" ( refreshToken, latitude, longitude, h3index, category,admin_id) values( $1, $2, $3, $4, $5, $6) returning id"},
 			UPDATE:             {query: "update \"user\" set latitude=$2, longitude=$3, h3index=$4 where id=$1 returning id, refreshToken, latitude, longitude, h3index, category"},
-			UPDATE_ADMIN:       {query: "update \"admin\" set passwordhash where id=$1 "},
+			UPDATE_ADMIN:       {query: "update \"admin\" set passwordhash=$2 where id=$1 "},
 			UPDATE_REFTOKEN:    {query: "update \"user\" set refreshToken=$2 where id=$1 returning refreshToken"},
 			DELETE:             {query: "delete from \"user\" where id=$1 returning id, refreshToken, latitude, longitude, h3index, category"},
 		},

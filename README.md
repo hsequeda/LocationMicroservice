@@ -105,19 +105,6 @@ User: returns an User that match an id.
       ): [User]
 
 ##Mutation
-AddUser: set a new User.
-    
-    addUser(
-        name: String
-        lat: Float
-        long: Float
-        category: category
-      ): User
-      
-DeleteUser: remove an User by its Id.
-
-     deleteUser(id: Int): User
-     
 UpdateGeoCord: update the the geographical coordinates of the User.
 
     updateGeoCord(

@@ -38,7 +38,6 @@ const (
 func init() {
 	var err error
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
-
 	Db, err = data.NewDb(os.Getenv(data.DB_USER),
 		os.Getenv(data.DB_PASS),
 		os.Getenv(data.DB_HOST),
