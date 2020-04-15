@@ -33,6 +33,10 @@ const (
 	// Token types
 	REF_TOKEN_TYPE  = "RefToken"
 	TEMP_TOKEN_TYPE = "TempToken"
+
+	// TLS
+	TLS_CERT_PATH = "TLS_CERT_PATH"
+	TLS_KEY_PATH  = "TLS_KEY_PATH"
 )
 
 func init() {
@@ -64,9 +68,10 @@ func Start() {
 	})
 
 	h := handler.New(&handler.Config{
-		Schema:   &schema,
-		Pretty:   true,
-		GraphiQL: true,
+		Schema:     &schema,
+		Pretty:     true,
+		GraphiQL:   false,
+		Playground: true,
 	})
 	r := mux.NewRouter()
 	auth := r.PathPrefix("/admin").Subrouter()
@@ -83,7 +88,8 @@ func Start() {
 		Addr: os.Getenv(SERVER_ADDRESS),
 		// ReadTimeout:  1 * time.Second,
 		// WriteTimeout: 1 * time.Second,
-		Handler: r,
+		MaxHeaderBytes: 1 << 20,
+		Handler:        r,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -91,9 +97,16 @@ func Start() {
 	go handleSubscriptions(subscriptionManager)
 	go shutdown(&server, cancel)
 
-	log.Print("Server Started")
-	if err := server.ListenAndServe(); err != nil {
-		log.Print(err)
+	if config.keyPath != "" && config.certPath != "" {
+		log.Print("Server Started in Https")
+		if err := server.ListenAndServeTLS(config.certPath, config.keyPath); err != nil {
+			log.Print(err)
+		}
+	} else {
+		log.Print("Server Started in Http")
+		if err := server.ListenAndServe(); err != nil {
+			log.Print(err)
+		}
 	}
 
 	<-ctx.Done()

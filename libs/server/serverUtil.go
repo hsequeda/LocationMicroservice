@@ -16,9 +16,13 @@ import (
 type serverConfig struct {
 	graphQlAPIEndpoint string
 	serverAddress      string
-	refreshTokenExp    time.Duration
-	tempTokenExp       time.Duration
-	secret             string
+	// Token
+	refreshTokenExp time.Duration
+	tempTokenExp    time.Duration
+	secret          string
+	// TLS
+	certPath string
+	keyPath  string
 }
 
 var config serverConfig
@@ -35,6 +39,9 @@ func init() {
 		if config.graphQlAPIEndpoint == "" {
 			panic(fmt.Sprintf("%s is empty", ENDPOINT))
 		}
+
+		config.certPath = os.Getenv(TLS_CERT_PATH)
+		config.keyPath = os.Getenv(TLS_KEY_PATH)
 
 		config.secret = os.Getenv(SECRET)
 		if config.secret == "" {
