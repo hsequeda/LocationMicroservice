@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/functionalfoundry/graphqlws"
 	"locationMicroService/libs/actors"
 	"locationMicroService/libs/util"
 	"net/http"
@@ -244,8 +243,4 @@ func endpointDeleteUser(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-}
-
-func handleSubscriptions(manager graphqlws.SubscriptionManager) {
-	println(" implement me")
 }

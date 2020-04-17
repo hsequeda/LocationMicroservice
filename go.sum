@@ -30,6 +30,12 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sirupsen/logrus v1.5.0 h1:1N5EYkVAPEywqZRJd7cwnRtCb6xJx7NH3T3WUTF980Q=
 github.com/sirupsen/logrus v1.5.0/go.mod h1:+F7Ogzej0PZc/94MaYx/nvG9jOFMD2osvC3s+Squfpo=
+github.com/stdevHsequeda/graphqlws v0.0.0-20200417014826-c231513fdb3d h1:l5jxP9ecsZlYRFikGICry+AkaDxS6gEnMacPfDoI0gI=
+github.com/stdevHsequeda/graphqlws v0.0.0-20200417014826-c231513fdb3d/go.mod h1:agHuz9URTpxtHLryPpuupQN/wDltNB7cfnXULFq8w5A=
+github.com/stdevHsequeda/handler v0.2.3 h1:SiVDQZI93L5jTwPwXvI6uWseht601BcuhepjtU4MOOQ=
+github.com/stdevHsequeda/handler v0.2.3/go.mod h1:GQbNYbm+LIr8FZm04jLPjWy0vrN5qhf/azIDlggrikQ=
+github.com/stdevHsequeda/handler v0.2.4 h1:KBQBKpsrp1CGICGrNTH/aAUhBcjb/6qKCh3vKuyHH8w=
+github.com/stdevHsequeda/handler v0.2.4/go.mod h1:GQbNYbm+LIr8FZm04jLPjWy0vrN5qhf/azIDlggrikQ=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H4=

@@ -3,6 +3,7 @@ package server
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/graphql"
 	"locationMicroService/libs/actors"
@@ -157,9 +158,19 @@ func UpdateUser(params graphql.ResolveParams) (interface{}, error) {
 	}
 
 	auxUser := actors.NewUser("", lat, long, actors.Generic, -1)
-	if user, err := Db.UpdateUser(id, lat, long, auxUser.H3Positions); err == sql.ErrNoRows {
+
+	user, err := Db.UpdateUser(id, lat, long, auxUser.H3Positions)
+	switch {
+	case err == sql.ErrNoRows:
 		return nil, errors.New("not found User with inserted id")
-	} else {
+	case err != nil:
+		return nil, err
+	default:
+		go func() {
+			mut.Lock()
+			updateCh <- *user
+			mut.Unlock()
+		}()
 		return user, nil
 	}
 }
@@ -203,6 +214,20 @@ func GetUserTempToken(params graphql.ResolveParams) (interface{}, error) {
 // ---- Subscriptions ---->
 
 func GetUserPos(params graphql.ResolveParams) (interface{}, error) {
+	user, ok := params.Context.Value("user").(actors.User)
+	if ok {
+		if id, ok := params.Args["id"].(int); !ok {
+			return nil, errors.New("id argument could be missing")
+		} else {
+			if _, err := Db.GetUser(id); err != nil {
+				return nil, fmt.Errorf("not found user with id: %d", id)
+			}
 
-	return "Maria", nil
+			if id == user.Id {
+				return user.GeoCord, nil
+			}
+		}
+		return nil, nil
+	}
+	return nil, errors.New("invalid request")
 }

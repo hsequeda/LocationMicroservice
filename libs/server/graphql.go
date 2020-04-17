@@ -160,7 +160,7 @@ var SubscriptionType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Subscription",
 	Fields: graphql.Fields{
 		"getUserPos": &graphql.Field{
-			Type: graphql.String,
+			Type: geoCordType,
 			Args: graphql.FieldConfigArgument{
 				"id": &graphql.ArgumentConfig{
 					Type:        graphql.NewNonNull(graphql.Int),
