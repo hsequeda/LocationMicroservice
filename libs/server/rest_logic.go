@@ -13,27 +13,28 @@ import (
 )
 
 func endpointRegisterUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	headerAuth, ok := r.Context().Value("token").(string)
 	if !ok {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 
 	adminToken, err := getTokenFromHeader(headerAuth)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(err.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 
 	claimsMap, err := verifyToken(adminToken)
 	if err != nil {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 
 	adminId, err := getAdminDataFromClaims(claimsMap)
 	if err != nil {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 
@@ -43,7 +44,7 @@ func endpointRegisterUser(w http.ResponseWriter, r *http.Request) {
 		Category  string  `json:"category"`
 	}
 	if err = json.NewDecoder(r.Body).Decode(&userParams); err != nil {
-		http.Error(w, "couldn't get request body", http.StatusBadRequest)
+		http.Error(w, string(getHttpErr("couldn't get request body", http.StatusBadRequest)), http.StatusBadRequest)
 		return
 	}
 
@@ -51,36 +52,37 @@ func endpointRegisterUser(w http.ResponseWriter, r *http.Request) {
 	newUser := actors.NewUser(refreshToken, userParams.Latitude, userParams.Longitude, userParams.Category, adminId)
 	userId, err := Db.AddUser(newUser)
 	if err != nil {
-		http.Error(w, "error writing in the database", http.StatusInternalServerError)
+		http.Error(w, string(getHttpErr("error writing in the database", http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
 
 	refreshToken, err = updateRefreshToken(userId)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("error generating refreshToken: %s", err.Error()), http.StatusInternalServerError)
+		http.Error(w, string(getHttpErr(fmt.Sprintf("error generating refreshToken: %s", err.Error()), http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(w).Encode(refreshToken); err != nil {
-		http.Error(w, "error encoding refreshToken to json", http.StatusInternalServerError)
+		http.Error(w, string(getHttpErr("error encoding refreshToken to json", http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
 }
 
 func endpointLoginAdmin(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	userName, password, ok := r.BasicAuth()
 	if !ok {
-		http.Error(w, "not authorize!", http.StatusUnauthorized)
+		http.Error(w, string(getHttpErr("not authorize!", http.StatusUnauthorized)), http.StatusUnauthorized)
+
 		return
 	}
 	admin, err := Db.GetAdmin(userName)
 	if err != nil {
-		http.Error(w, "couldn't get the admin data from the database", http.StatusInternalServerError)
+		http.Error(w, string(getHttpErr("couldn't get the admin data from the database", http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
 	if err := util.VerifyPassword(password, admin.PassHash); err != nil {
-		http.Error(w, "invalid credentials", http.StatusUnauthorized)
+		http.Error(w, string(getHttpErr("invalid credentials", http.StatusUnauthorized)), http.StatusUnauthorized)
 		return
 	}
 
@@ -91,32 +93,32 @@ func endpointLoginAdmin(w http.ResponseWriter, r *http.Request) {
 		"exp":  time.Now().Add(config.tempTokenExp).Unix(),
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, string(getHttpErr(err.Error(), http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(w).Encode(token); err != nil {
-		http.Error(w, "error returning token", http.StatusInternalServerError)
+		http.Error(w, string(getHttpErr("error returning token", http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
 }
 
 func endpointGetRefreshTokenFromClient(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	tokenStr, err := getTokenFromHeader(r.Context().Value("token").(string))
 	if err != nil {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(err.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 	claimsMap, err := verifyToken(tokenStr)
 	if err != nil {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 
 	_, err = getAdminDataFromClaims(claimsMap)
 	if err != nil {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 
@@ -124,52 +126,52 @@ func endpointGetRefreshTokenFromClient(w http.ResponseWriter, r *http.Request) {
 		Id int `json:"id"`
 	}
 	if err = json.NewDecoder(r.Body).Decode(&userId); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, string(getHttpErr(err.Error(), http.StatusBadRequest)), http.StatusBadRequest)
 		return
 	}
 
 	user, err := Db.GetUser(userId.Id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, string(getHttpErr(err.Error(), http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
 
 	userClaimsMap, err := verifyToken(user.RefreshToken)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, string(getHttpErr(err.Error(), http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
 
 	if int64(userClaimsMap["exp"].(float64)) >= time.Now().Unix() {
 		user.RefreshToken, err = updateRefreshToken(userId.Id)
 		if err != nil {
-			http.Error(w, "error generating token", http.StatusInternalServerError)
+			http.Error(w, string(getHttpErr("error generating token", http.StatusInternalServerError)), http.StatusInternalServerError)
 			return
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(w).Encode(user.RefreshToken); err != nil {
-		http.Error(w, "error returning token", http.StatusInternalServerError)
+		http.Error(w, string(getHttpErr("error returning token", http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
 }
 
 func endpointChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	tokenStr, err := getTokenFromHeader(r.Context().Value("token").(string))
 	if err != nil {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 	claimsMap, err := verifyToken(tokenStr)
 	if err != nil {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 
 	adminId, err := getAdminDataFromClaims(claimsMap)
 	if err != nil {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 
@@ -179,51 +181,52 @@ func endpointChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = json.NewDecoder(r.Body).Decode(&changePasswordParams); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, string(getHttpErr(err.Error(), http.StatusBadRequest)), http.StatusBadRequest)
 		return
 	}
 
 	admin, err := Db.GetAdminById(adminId)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "not found admin with that id", http.StatusBadRequest)
+			http.Error(w, string(getHttpErr("not found admin with that id", http.StatusBadRequest)), http.StatusBadRequest)
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, string(getHttpErr(err.Error(), http.StatusInternalServerError)), http.StatusInternalServerError)
 		}
 		return
 	}
 
 	if err := util.VerifyPassword(changePasswordParams.LastPassword, admin.PassHash); err != nil {
-		http.Error(w, "password not match", http.StatusBadRequest)
+		http.Error(w, string(getHttpErr("password not match", http.StatusBadRequest)), http.StatusBadRequest)
 		return
 	}
 
 	newPasswordHash, err := util.GeneratePasswordHash(changePasswordParams.NewPassword)
 	if err != nil {
-		http.Error(w, "error generating new Password", http.StatusInternalServerError)
+		http.Error(w, string(getHttpErr("error generating new Password", http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
-	if err := Db.UpdateAdminPassHash(adminId, newPasswordHash); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err = Db.UpdateAdminPassHash(adminId, newPasswordHash); err != nil {
+		http.Error(w, string(getHttpErr(err.Error(), http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
 }
 
 func endpointDeleteUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	tokenStr, err := getTokenFromHeader(r.Context().Value("token").(string))
 	if err != nil {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 	claimsMap, err := verifyToken(tokenStr)
 	if err != nil {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 
 	_, err = getAdminDataFromClaims(claimsMap)
 	if err != nil {
-		http.Error(w, errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)
+		http.Error(w, string(getHttpErr(errInvalidToken.Error(), http.StatusNetworkAuthenticationRequired)), http.StatusNetworkAuthenticationRequired)
 		return
 	}
 
@@ -231,15 +234,15 @@ func endpointDeleteUser(w http.ResponseWriter, r *http.Request) {
 		Id int `json:"id"`
 	}
 	if err = json.NewDecoder(r.Body).Decode(&userId); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, string(getHttpErr(err.Error(), http.StatusBadRequest)), http.StatusBadRequest)
 		return
 	}
 
 	if _, err = Db.DeleteUser(userId.Id); err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "not found user with that id", http.StatusBadRequest)
+			http.Error(w, string(getHttpErr("not found user with that id", http.StatusBadRequest)), http.StatusBadRequest)
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, string(getHttpErr(err.Error(), http.StatusInternalServerError)), http.StatusInternalServerError)
 		}
 		return
 	}

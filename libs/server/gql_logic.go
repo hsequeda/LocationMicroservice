@@ -34,11 +34,11 @@ func GetCloseUsers(params graphql.ResolveParams) (interface{}, error) {
 	var category string
 	var ok bool
 
-	if lat, ok = params.Args["originLat"].(float64); !ok {
+	if lat, ok = params.Args["origin_lat"].(float64); !ok {
 		return nil, errors.New("lat argument could be missing")
 	}
 
-	if long, ok = params.Args["originLong"].(float64); !ok {
+	if long, ok = params.Args["origin_long"].(float64); !ok {
 		return nil, errors.New("long argument could be missing")
 	}
 
@@ -150,10 +150,10 @@ func UpdateUser(params graphql.ResolveParams) (interface{}, error) {
 
 	var ok bool
 	var lat, long float64
-	if lat, ok = params.Args["newLat"].(float64); !ok {
+	if lat, ok = params.Args["new_lat"].(float64); !ok {
 		return nil, errors.New("lat argument could be missing")
 	}
-	if long, ok = params.Args["newLong"].(float64); !ok {
+	if long, ok = params.Args["new_long"].(float64); !ok {
 		return nil, errors.New("long argument could be missing")
 	}
 
@@ -177,7 +177,7 @@ func UpdateUser(params graphql.ResolveParams) (interface{}, error) {
 
 // GetUserTempToken
 func GetUserTempToken(params graphql.ResolveParams) (interface{}, error) {
-	refreshToken, ok := params.Args["refreshToken"].(string)
+	refreshToken, ok := params.Args["refresh_token"].(string)
 	if !ok {
 		return nil, errors.New("refreshToken argument could be missing")
 	}

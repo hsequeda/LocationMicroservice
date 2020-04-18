@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"log"
@@ -195,4 +196,14 @@ func shutdown(s *http.Server, cancelFunc context.CancelFunc) {
 		log.Fatal(err)
 	}
 	cancelFunc()
+}
+
+func getHttpErr(srtErr string, httpStatus int) json.RawMessage {
+	b, _ := json.Marshal(struct {
+		Error      string `json:"err"`
+		HttpStatus int    `json:"http_status"`
+	}{
+		Error: srtErr, HttpStatus: httpStatus,
+	})
+	return b
 }

@@ -36,7 +36,7 @@ var categoryEnum = graphql.NewEnum(graphql.EnumConfig{
 })
 
 var userType = graphql.NewObject(graphql.ObjectConfig{
-	Name: "User",
+	Name: "user",
 
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
@@ -58,7 +58,7 @@ var QueryType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Query",
 	Fields: graphql.Fields{
 
-		// Endpoint: /location?query={user(id: int ){name, geo_cord, category}}
+		// Endpoint: /location?query={user(id: int ){id, geo_cord, category}}
 		"user": &graphql.Field{
 			Type:        userType,
 			Description: "get User by id.",
@@ -71,14 +71,14 @@ var QueryType = graphql.NewObject(graphql.ObjectConfig{
 			Resolve: GetUser,
 		},
 
-		// Endpoint: /location?query={currentUser(){name, geo_cord, category}}
+		// Endpoint: /location?query={currentUser(){id, geo_cord, category}}
 		"currentUser": &graphql.Field{
 			Type:        userType,
 			Description: "get the current user.",
 			Resolve:     GetCurrentUser,
 		},
 
-		// Endpoint: /location? query={allUsers(category = generic: string ){id, name, geo_cord, category}}
+		// Endpoint: /location?query={allUsers(category: category){id, geo_cord, category}}
 		"allUsers": &graphql.Field{
 			Type: graphql.NewList(userType),
 			Description: "Get all users by category.\n" +
@@ -93,16 +93,16 @@ var QueryType = graphql.NewObject(graphql.ObjectConfig{
 			Resolve: GetAllUsers,
 		},
 
-		// Endpoint: /location?query={getCloseUsers(originLat:float, originalLong:float, resolution:int, category:String){id, name,geo_cord, category }}
+		// Endpoint: /location?query={getCloseUsers(origin_lat: float, origin_long: float, resolution: int, category: category){id, geo_cord, category }}
 		"getCloseUsers": &graphql.Field{
 			Type:        graphql.NewList(userType),
 			Description: "Get list of user close to a position.",
 			Args: graphql.FieldConfigArgument{
-				"originLat": &graphql.ArgumentConfig{
+				"origin_lat": &graphql.ArgumentConfig{
 					Type:        graphql.NewNonNull(graphql.Float),
 					Description: "Latitude of the origin point",
 				},
-				"originLong": &graphql.ArgumentConfig{
+				"origin_long": &graphql.ArgumentConfig{
 					Type:        graphql.NewNonNull(graphql.Float),
 					Description: "Longitude of the origin point",
 				},
@@ -113,7 +113,7 @@ var QueryType = graphql.NewObject(graphql.ObjectConfig{
 				},
 				"category": &graphql.ArgumentConfig{
 					Type:        categoryEnum,
-					Description: "Category of User Ex(CLIENT,SERVICE_PROVIDER)",
+					Description: "Category of User Ex(CLIENT, SERVICE_PROVIDER)",
 				},
 			},
 			Resolve: GetCloseUsers,
@@ -125,16 +125,16 @@ var MutationType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Mutation",
 	Fields: graphql.Fields{
 
-		// Endpoint: /location?query=mutation+_{updateGeoCord(newLat: float, newLong: float){id, name, geo_cord, category}}
+		// Endpoint: /location?query=mutation+_{updateGeoCord(new_lat: float, new_long: float){id, geo_cord, category}}
 		"updateGeoCord": &graphql.Field{
 			Type:        userType,
 			Description: "Update the coordinates of a User",
 			Args: graphql.FieldConfigArgument{
-				"newLat": &graphql.ArgumentConfig{
+				"new_lat": &graphql.ArgumentConfig{
 					Type:        graphql.NewNonNull(graphql.Float),
 					Description: "New latitude",
 				},
-				"newLong": &graphql.ArgumentConfig{
+				"new_long": &graphql.ArgumentConfig{
 					Type:        graphql.NewNonNull(graphql.Float),
 					Description: "New longitude",
 				},
@@ -142,12 +142,12 @@ var MutationType = graphql.NewObject(graphql.ObjectConfig{
 			Resolve: UpdateUser,
 		},
 
-		// Endpoint: /location?query=mutation+_{getUserTempToken(){id, name,geo_cord, category }}
+		// Endpoint: /location?query=mutation+_{getUserTempToken(refresh_token: string){id, geo_cord, category }}
 		"getUserTempToken": &graphql.Field{
 			Type:        graphql.String,
 			Description: fmt.Sprintf("Return an temporary access token"),
 			Args: graphql.FieldConfigArgument{
-				"refreshToken": &graphql.ArgumentConfig{
+				"refresh_token": &graphql.ArgumentConfig{
 					Type: graphql.NewNonNull(graphql.String),
 				},
 			},
