@@ -15,7 +15,7 @@ require (
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/sirupsen/logrus v1.5.0
 	github.com/stdevHsequeda/graphqlws v0.0.0-20200417014826-c231513fdb3d
-	github.com/stretchr/testify v1.5.1 // indirect
+	github.com/stretchr/testify v1.5.1
 	github.com/uber/h3-go v3.0.1+incompatible
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect
 	golang.org/x/crypto v0.0.0-20200406173513-056763e48d71

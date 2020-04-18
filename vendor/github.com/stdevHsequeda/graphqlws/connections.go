@@ -3,7 +3,7 @@ package graphqlws
 import (
 	"encoding/json"
 	"errors"
-	"github.com/graphql-go/graphql/gqlerrors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -195,7 +195,7 @@ func (conn *connection) sendOperationErrors(opID string, errs []error) {
 	}
 	msg := operationMessageForType(gqlError)
 	msg.ID = opID
-	msg.Payload = ErrorsFromGraphQLErrors(gqlerrors.FormatErrors(errs...))
+	msg.Payload = errs
 	conn.closeMutex.Lock()
 	if !conn.closed {
 		conn.outgoing <- msg
@@ -249,10 +249,6 @@ func (conn *connection) writeLoop() {
 				}).Warn("Sending message failed")
 				return
 			}
-
-			if msg.Type == gqlError || msg.Type == gqlConnectionError {
-				return
-			}
 		}
 	}
 }
@@ -262,7 +258,7 @@ func (conn *connection) readLoop() {
 	defer conn.ws.Close()
 
 	conn.ws.SetReadLimit(readLimit)
-	var initErr error
+
 	for {
 		// Read the next message received from the client
 		rawPayload := json.RawMessage{}
@@ -298,10 +294,10 @@ func (conn *connection) readLoop() {
 				if conn.config.Authenticate != nil {
 					user, err := conn.config.Authenticate(data.AuthToken)
 					if err != nil {
-						initErr = err
-						// msg := operationMessageForType(gqlConnectionError)
-						// msg.Payload = fmt.Sprintf("Failed to authenticate user: %v", err)
-						// conn.outgoing <- msg
+						msg := operationMessageForType(gqlConnectionError)
+						msg.Payload = fmt.Sprintf("Failed to authenticate user: %v", err)
+						conn.outgoing <- msg
+						conn.close()
 					} else {
 						conn.user = user
 						conn.outgoing <- operationMessageForType(gqlConnectionAck)
@@ -314,10 +310,6 @@ func (conn *connection) readLoop() {
 		// Let event handlers deal with starting operations
 		case gqlStart:
 			if conn.config.EventHandlers.StartOperation != nil {
-				if initErr != nil {
-					conn.sendOperationErrors(msg.ID, []error{initErr})
-					break
-				}
 				data := StartMessagePayload{}
 				if err := json.Unmarshal(rawPayload, &data); err != nil {
 					conn.SendError(errors.New("Invalid GQL_START payload"))
