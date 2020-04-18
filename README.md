@@ -9,6 +9,9 @@
 ###Install and configure Postgresql:
 https://www.thegeekstuff.com/2009/04/linux-postgresql-install-and-configure-from-source/
 
+###Basic Authentication Header Generator:
+    https://www.blitter.se/utils/basic-authentication-header-generator/
+    
 #Install
 Clone this repository:``git clone http://wankar.com:3000/kaypi/kaypi_back_geo.git``
 

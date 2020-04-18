@@ -112,7 +112,7 @@ func (db *Data) GetCloseUsers(resolution int, h3IndexPos int64, category string)
 	for rowIter.Next() {
 		var user actors.User
 		err = rowIter.Scan(&user.Id, &user.RefreshToken, &user.GeoCord.Latitude,
-			&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category)
+			&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category, &user.AdminId)
 		if err != nil {
 			return nil, err
 		}

@@ -16,24 +16,11 @@ recommended using the database with which you will integrate your application.
 test.sh script. To see the list of the environment vars necessaries consult the test.sh script
  or the README.md file.
 */
+
 var client = http.DefaultClient
 var serverAddress = "http://localhost:8080"
 
 func Test_LoginAdmin(t *testing.T) {
-	// Graphql queries
-	// gql_user := func(id int) string { return fmt.Sprintf("/location?query={user(id: %d ){id, geo_cord, category}}", id) }
-	// gql_currentUser := func() string { return fmt.Sprintf("/location?query={currentUser(){id, geo_cord, category}}") }
-	// gql_allUser := func(category string) string { return fmt.Sprintf("/location?query{allUsers(category: %s){id, geo_cord, category}}", category) }
-	// gql_getCloseUser := func(originLat, originLong float64, resolution int, category string) string { return fmt.Sprintf("/location?query={getCloseUsers(origin_lat: %f, origin_long: %f, resolution: %d, category: %s){id, geo_cord, category }}", originLat, originLong, resolution, category) }
-
-	// Graphql mutations
-	// gql_updateGeoCord := func(newLat, newLong float64) string { return fmt.Sprintf("/location?query=mutation+_{updateGeoCord(new_lat: %f, new_long: %f){id, geo_cord, category}}", newLat, newLong) }
-	// gql_getUserTempToken := func() string { return fmt.Sprintf("/location?query=mutation+_{getUserTempToken(){id, geo_cord, category }}") }
-
-	// REST
-
-	// rest_getRefreshToken := func() string { return fmt.Sprintf("/admin/getRefreshToken") }
-	// rest_deleteUser := func() string { return fmt.Sprintf("/admin/deleteUser") }
 
 	var test_Cases = []struct {
 		name          string

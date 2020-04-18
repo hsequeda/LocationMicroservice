@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"github.com/graphql-go/graphql"
 	"locationMicroService/libs/actors"
 )
@@ -144,11 +143,16 @@ var MutationType = graphql.NewObject(graphql.ObjectConfig{
 
 		// Endpoint: /location?query=mutation+_{getUserTempToken(refresh_token: string){id, geo_cord, category }}
 		"getUserTempToken": &graphql.Field{
-			Type:        graphql.String,
-			Description: fmt.Sprintf("Return an temporary access token"),
+			Type: graphql.String,
+			Description: "getUserTempToken  returns a temporary token with which to access the user's queries," +
+				" mutations and subscriptions.",
+
 			Args: graphql.FieldConfigArgument{
 				"refresh_token": &graphql.ArgumentConfig{
 					Type: graphql.NewNonNull(graphql.String),
+					Description: "A refreshToken is a token with a longer duration that is temporaryToken," +
+						" it works to obtain the temporaryToken, when the user's refreshToken expires, it has to" +
+						" log in to the system again.",
 				},
 			},
 			Resolve: GetUserTempToken,
