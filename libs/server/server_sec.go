@@ -7,9 +7,9 @@ import (
 	"strings"
 )
 
-var errInvalidToken = errors.New(" invalid token!")
-var errInvalidRefreshToken = errors.New(" invalid refresh token!")
-var errAuthHeaderInvalid = errors.New(" header Authorization invalid!")
+var errInvalidToken = errors.New("invalid token")
+var errInvalidRefreshToken = errors.New("invalid refresh token")
+var errAuthHeaderInvalid = errors.New("header Authorization invalid")
 
 func createToken(claims jwt.MapClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

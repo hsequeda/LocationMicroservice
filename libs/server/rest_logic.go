@@ -3,6 +3,7 @@ package server
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"locationMicroService/libs/actors"
@@ -11,6 +12,8 @@ import (
 	"strconv"
 	"time"
 )
+
+var errInvalidCredentials = errors.New("invalid credentials")
 
 func endpointRegisterUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -48,6 +51,11 @@ func endpointRegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if userParams.Category != actors.Client && userParams.Category != actors.ServiceProvider {
+		http.Error(w, string(getHttpErr("invalid user category", http.StatusBadRequest)), http.StatusBadRequest)
+		return
+	}
+
 	refreshToken := "mockToken"
 	newUser := actors.NewUser(refreshToken, userParams.Latitude, userParams.Longitude, userParams.Category, adminId)
 	userId, err := Db.AddUser(newUser)
@@ -62,7 +70,10 @@ func endpointRegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = json.NewEncoder(w).Encode(refreshToken); err != nil {
+	if err = json.NewEncoder(w).Encode(struct {
+		UserId       int    `json:"user_id"`
+		RefreshToken string `json:"refresh_token"`
+	}{UserId: userId, RefreshToken: refreshToken}); err != nil {
 		http.Error(w, string(getHttpErr("error encoding refreshToken to json", http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
@@ -72,17 +83,17 @@ func endpointLoginAdmin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	userName, password, ok := r.BasicAuth()
 	if !ok {
-		http.Error(w, string(getHttpErr("not authorize!", http.StatusUnauthorized)), http.StatusUnauthorized)
+		http.Error(w, string(getHttpErr(errInvalidCredentials.Error(), http.StatusUnauthorized)), http.StatusUnauthorized)
 
 		return
 	}
 	admin, err := Db.GetAdmin(userName)
 	if err != nil {
-		http.Error(w, string(getHttpErr("couldn't get the admin data from the database", http.StatusInternalServerError)), http.StatusInternalServerError)
+		http.Error(w, string(getHttpErr(errInvalidCredentials.Error(), http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
 	if err := util.VerifyPassword(password, admin.PassHash); err != nil {
-		http.Error(w, string(getHttpErr("invalid credentials", http.StatusUnauthorized)), http.StatusUnauthorized)
+		http.Error(w, string(getHttpErr(errInvalidCredentials.Error(), http.StatusUnauthorized)), http.StatusUnauthorized)
 		return
 	}
 
@@ -97,7 +108,9 @@ func endpointLoginAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = json.NewEncoder(w).Encode(token); err != nil {
+	if err = json.NewEncoder(w).Encode(struct {
+		TempToken string `json:"temp_token"`
+	}{TempToken: token}); err != nil {
 		http.Error(w, string(getHttpErr("error returning token", http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
@@ -150,7 +163,9 @@ func endpointGetRefreshTokenFromClient(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err = json.NewEncoder(w).Encode(user.RefreshToken); err != nil {
+	if err = json.NewEncoder(w).Encode(struct {
+		RefreshToken string `json:"refresh_token"`
+	}{RefreshToken: user.RefreshToken}); err != nil {
 		http.Error(w, string(getHttpErr("error returning token", http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}

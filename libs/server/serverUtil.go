@@ -200,7 +200,7 @@ func shutdown(s *http.Server, cancelFunc context.CancelFunc) {
 
 func getHttpErr(srtErr string, httpStatus int) json.RawMessage {
 	b, _ := json.Marshal(struct {
-		Error      string `json:"err"`
+		Error      string `json:"error"`
 		HttpStatus int    `json:"http_status"`
 	}{
 		Error: srtErr, HttpStatus: httpStatus,
