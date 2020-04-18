@@ -144,7 +144,11 @@ func endpointGetRefreshTokenFromClient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := Db.GetUser(userId.Id)
-	if err != nil {
+	switch {
+	case err == sql.ErrNoRows:
+		http.Error(w, string(getHttpErr("not found user with that id", http.StatusBadRequest)), http.StatusBadRequest)
+		return
+	case err != nil:
 		http.Error(w, string(getHttpErr(err.Error(), http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}

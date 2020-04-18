@@ -105,7 +105,9 @@ func Test_ChangeAdminPassword(t *testing.T) {
 			require.NoError(t, err, tc.name)
 
 			if tc.token == "" {
-				tc.token = respJSON["temp_token"].(string)
+				var ok bool
+				tc.token, ok = respJSON["temp_token"].(string)
+				require.True(t, ok, tc.name)
 			}
 
 			resp, err = client.Do(generateChangeAdminPassReq(t, tc.token, tc.newPassword, tc.lastPass))
@@ -137,7 +139,7 @@ func Test_RegisterUser(t *testing.T) {
 	}
 
 	for _, tc := range test_Cases {
-		t.Run(fmt.Sprintf("ChangePassword: %s", tc.name), func(t *testing.T) {
+		t.Run(fmt.Sprintf("RegisterUser: %s", tc.name), func(t *testing.T) {
 			resp, err := client.Do(generateLoginAdminReq(t, "root", "12345678", true))
 			require.NoError(t, err, tc.name)
 
@@ -146,7 +148,9 @@ func Test_RegisterUser(t *testing.T) {
 			require.NoError(t, err, tc.name)
 
 			if tc.token == "" {
-				tc.token = respJSON["temp_token"].(string)
+				var ok bool
+				tc.token, ok = respJSON["temp_token"].(string)
+				require.True(t, ok, tc.name)
 			}
 
 			resp, err = client.Do(generateRegisterUserReq(t, tc.token, tc.userLat, tc.userLong, tc.userCategory))
@@ -162,6 +166,72 @@ func Test_RegisterUser(t *testing.T) {
 				require.True(t, ok, tc.name)
 				require.NotEmpty(t, floatId, tc.name)
 				resp, err = client.Do(generateDeleteUser(t, tc.token, int(floatId)))
+				require.NoError(t, err, tc.name)
+				require.Equal(t, 200, resp.StatusCode, tc.name)
+			} else {
+				require.Equal(t, tc.errCode, int(respJSON["http_status"].(float64)), tc.name)
+				require.Equal(t, tc.errMsg, respJSON["error"], tc.name)
+			}
+		})
+	}
+}
+
+func Test_GetRefreshTokenFromClient(t *testing.T) {
+	resp, err := client.Do(generateLoginAdminReq(t, "root", "12345678", true))
+	require.NoError(t, err, "GetRefreshTokenFromClient")
+
+	var respJSON map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&respJSON)
+	require.NoError(t, err, "GetRefreshTokenFromClient")
+
+	token, ok := respJSON["temp_token"].(string)
+	require.True(t, ok, "GetRefreshTokenFromClient")
+
+	resp, err = client.Do(generateRegisterUserReq(t, token, 1, 2, "CLIENT"))
+	require.NoError(t, err, "GetRefreshTokenFromClient")
+
+	err = json.NewDecoder(resp.Body).Decode(&respJSON)
+	require.NoError(t, err, "GetRefreshTokenFromClient")
+
+	require.NotEmpty(t, respJSON["user_id"], "GetRefreshTokenFromClient")
+	floatId, ok := respJSON["user_id"].(float64)
+	require.True(t, ok, "GetRefreshTokenFromClient")
+
+	var test_Cases = []struct {
+		name    string
+		token   string
+		userId  int
+		errCode int
+		errMsg  string
+	}{
+		{name: "Ok", userId: int(floatId), errCode: 200},
+		{name: "WrongToken", token: "Wrong", errCode: 511, errMsg: "invalid token"},
+		{name: "WrongId", userId: int(floatId), errCode: 400, errMsg: "not found user with that id"},
+	}
+
+	for _, tc := range test_Cases {
+		t.Run(fmt.Sprintf("GetRefreshTokenFromClient: %s", tc.name), func(t *testing.T) {
+			resp, err := client.Do(generateLoginAdminReq(t, "root", "12345678", true))
+			require.NoError(t, err, tc.name)
+
+			var respJSON map[string]interface{}
+			err = json.NewDecoder(resp.Body).Decode(&respJSON)
+			require.NoError(t, err, tc.name)
+
+			if tc.token == "" {
+				tc.token, ok = respJSON["temp_token"].(string)
+				require.True(t, ok, tc.name)
+			}
+
+			resp, err = client.Do(generateGetRefreshTokenReq(t, tc.token, tc.userId))
+			require.NoError(t, err, tc.name)
+
+			err = json.NewDecoder(resp.Body).Decode(&respJSON)
+			require.NoError(t, err, tc.name)
+
+			if resp.StatusCode == 200 {
+				require.NotEmpty(t, respJSON["refresh_token"], tc.name)
+				resp, err = client.Do(generateDeleteUser(t, tc.token, tc.userId))
 				require.NoError(t, err, tc.name)
 				require.Equal(t, 200, resp.StatusCode, tc.name)
 			} else {
@@ -192,6 +262,7 @@ func generateChangeAdminPassReq(t *testing.T, tempToken, newPassword, lastPasswo
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/admin/changePassword", serverAddress), bytes.NewReader(b))
 	require.NoError(t, err)
 
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tempToken))
 	return req
 }
@@ -208,6 +279,7 @@ func generateRegisterUserReq(t *testing.T, tempToken string, userLat, userLong f
 	require.NoError(t, err)
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tempToken))
+	req.Header.Set("Content-Type", "application/json")
 	return req
 }
 
@@ -220,6 +292,21 @@ func generateDeleteUser(t *testing.T, tempToken string, id int) *http.Request {
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/admin/deleteUser", serverAddress), bytes.NewReader(b))
 	require.NoError(t, err)
 
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tempToken))
+	return req
+}
+
+func generateGetRefreshTokenReq(t *testing.T, tempToken string, id int) *http.Request {
+	b, err := json.Marshal(struct {
+		Id int `json:"id"`
+	}{Id: id})
+	require.NoError(t, err)
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/admin/getRefreshToken", serverAddress), bytes.NewReader(b))
+	require.NoError(t, err)
+
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tempToken))
 	return req
 }

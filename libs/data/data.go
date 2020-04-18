@@ -170,7 +170,8 @@ func (db *Data) DeleteUser(id int) (*actors.User, error) {
 
 	var user actors.User
 	err := db.stmtMap[DELETE].stmt.QueryRow(id).Scan(&user.Id, &user.RefreshToken, &user.GeoCord.Latitude,
-		&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category, &user.AdminId)
+		&user.GeoCord.Longitude, pq.Array(&user.H3Positions), &user.Category)
+
 	if err != nil {
 		return nil, err
 	}
