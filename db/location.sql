@@ -27,7 +27,7 @@ create table "user"
 );
 
 alter table "user"
-    owner to postgres;
+     owner to postgres;
 
 create unique index user_id_uindex
     on "user" (id);
