@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	// DB_Queries
 	GET_USER           = "get"
 	GET_ADMIN          = "getAdmin"
 	GET_ADMIN_BY_ID    = "getAdminById"
@@ -22,9 +23,8 @@ const (
 	UPDATE             = "update"
 	UPDATE_ADMIN       = "updateAdmin"
 	UPDATE_REFTOKEN    = "updateRefreshToken"
-)
 
-const (
+	// DB_Config
 	DB_USER    = "DB_USER"
 	DB_PASS    = "DB_PASS"
 	DB_NAME    = "DB_NAME"
@@ -32,15 +32,17 @@ const (
 	DB_SSLMODE = "DB_SSL_MODE"
 )
 
-type stmtConfig struct {
-	stmt  *sql.Stmt
-	query string
-}
+type (
+	stmtConfig struct {
+		stmt  *sql.Stmt
+		query string
+	}
 
-type Data struct {
-	db      *sql.DB
-	stmtMap map[string]*stmtConfig
-}
+	Data struct {
+		db      *sql.DB
+		stmtMap map[string]*stmtConfig
+	}
+)
 
 // NewDb construct a new Db type.
 func NewDb(user, password, dbHost, dbName, sslMode string) (core.Storage, error) {

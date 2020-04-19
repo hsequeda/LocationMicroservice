@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # postgres username
- export      DB_USER="rimaydb"
+ export      DB_USER="postgres"
 # user password
  export      DB_PASS="Wipaydb8##"
 # name of the database

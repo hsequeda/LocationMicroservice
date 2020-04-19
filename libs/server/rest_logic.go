@@ -84,14 +84,18 @@ func endpointLoginAdmin(w http.ResponseWriter, r *http.Request) {
 	userName, password, ok := r.BasicAuth()
 	if !ok {
 		http.Error(w, string(getHttpErr(errInvalidCredentials.Error(), http.StatusUnauthorized)), http.StatusUnauthorized)
-
 		return
 	}
 	admin, err := Db.GetAdmin(userName)
-	if err != nil {
-		http.Error(w, string(getHttpErr(errInvalidCredentials.Error(), http.StatusInternalServerError)), http.StatusInternalServerError)
+	switch {
+	case err == sql.ErrNoRows:
+		http.Error(w, string(getHttpErr("not found admin with that username", http.StatusBadRequest)), http.StatusBadRequest)
+		return
+	case err != nil:
+		http.Error(w, string(getHttpErr(err.Error(), http.StatusInternalServerError)), http.StatusInternalServerError)
 		return
 	}
+
 	if err := util.VerifyPassword(password, admin.PassHash); err != nil {
 		http.Error(w, string(getHttpErr(errInvalidCredentials.Error(), http.StatusUnauthorized)), http.StatusUnauthorized)
 		return
@@ -153,13 +157,8 @@ func endpointGetRefreshTokenFromClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userClaimsMap, err := verifyToken(user.RefreshToken)
+	_, err = verifyToken(user.RefreshToken)
 	if err != nil {
-		http.Error(w, string(getHttpErr(err.Error(), http.StatusInternalServerError)), http.StatusInternalServerError)
-		return
-	}
-
-	if int64(userClaimsMap["exp"].(float64)) >= time.Now().Unix() {
 		user.RefreshToken, err = updateRefreshToken(userId.Id)
 		if err != nil {
 			http.Error(w, string(getHttpErr("error generating token", http.StatusInternalServerError)), http.StatusInternalServerError)
