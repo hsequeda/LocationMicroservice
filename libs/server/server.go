@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
@@ -61,7 +60,7 @@ func init() {
 		os.Getenv(data.DB_NAME),
 		os.Getenv(data.DB_SSLMODE))
 	if err != nil {
-		fmt.Println(err)
+      log.Fatal(err)
 	}
 	updateCh = make(chan actors.User, 100)
 }

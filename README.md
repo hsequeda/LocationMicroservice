@@ -1,4 +1,19 @@
-#Requisites
+#LocationMicroservice:
+Servicio para manejar las localizaciones de usuarios de forma eficiente mediante el uso de la libreria H3 de uber.
+## Como funciona:
+La aplicacion guarda la posicion(en latitud y longitud) de los usuarios que se debe ir actualizando de forma periodica por los usuarios. A
+ partir de esta posicion se generan 16 indices h3 (uno para cada resolucion (consultar: https://h3geo.org/#/documentation/core-library/resolution-table)),
+ cada indice corresponde a un fragmento del mundo de forma hexagonal con un tamaño dependiente de su resolucion(cada indice es unico). A mayor resolucion menor tamaño de area.
+Esto nos permite obtener usuarios cercanos a una posicion respecto a una resolucion realizando solo una consulta. Si las posiciones de los usuarios estan en un mismo hexagono 
+(es decir, tienen un mismo indice) para una resolucion dada por el usuario entonces estos son cercanos. 
+###¿Que podemos hacer como usuarios?    
+
+- Registrarnos en la plataforma y actualizar nuestra posicion periodicamente para que otros usuarios nos encuentren (tambien nos asignamos una categoria(CLIENT, SERVICE_PROVIDER)).
+
+- Obtener la lista de usuarios  que se encuentran en un mismo indice dada una resolucion.
+- Subscribirnos a un usuario especifico para que cada ves que actualice su posicion nos llegue a nosotros.
+
+##Requisites
 - go 1.14+
 - postgres
 #### Instalar go:
@@ -9,7 +24,7 @@
 ###Configurar e instalar Postgresql:
 https://www.thegeekstuff.com/2009/04/linux-postgresql-install-and-configure-from-source/
 
-#Instalar
+##Instalar
 Clone este repositorio:``git clone http://wankar.com:3000/kaypi/kaypi_back_geo.git``
 
 Ejecute:
@@ -20,14 +35,14 @@ Ejecute:
 Ejecute `go help buildmode` para que vea los diferentes tipos de build que se pueden hacer. 
 
 
-#Correr las pruebas
+##Correr las pruebas
 Las pruebas estan en  `test/location_test.go` . Para correr las pruebas la aplicacion debe estar corriendo, ademas es necesario que la base de datos de admins no se halla modificado.
 
 Use `go test [test_file]`.
 
-#Correr la aplicacion
+##Correr la aplicacion
 Usted puede correr la aplicacion sin hacer build con el comando `go run .`.
-##Manualmente
+###Manualmente
 Exporta ls variables de entorno para la coneccion con la base de datos:
 
     # nombre del usuario de postgres (es necesario que el usuario tenga
@@ -54,10 +69,47 @@ Exporta ls variables de entorno para la coneccion con la base de datos:
      export     SECRET="XXXXX"
 	 
 Corra el siguiente comando para ejecutar la aplicacion:	 ``go run ./``
-##Usando el script run.sh.
+###Usando el script run.sh.
 Abre el script `run.sh` y configura las variables de entorno  corre `sh script/run.sh`.
 
-#Rest
+##Diagramas
+
+###Caso de usd del negocio:
+![alt text](./diagrams/UC_LocationMicroservice.jpg)
+
+###Diagrama de Clases:
+![alt text](./diagrams/DC_LocationMicroservice.jpg)
+
+###Diagrama de Entidad-Relacion:
+![alt text](./diagrams/ER_LocationMicroservice.jpg)
+
+###Diagramas de Secuencia:
+####DS_RegisterUser:
+![alt text](./diagrams/DS_RegisterUser.jpg)
+####DS_GetRefreshToken:
+![alt text](./diagrams/DS_GetRefreshToken.jpg)
+
+##Seguridad
+####Roles:
+	
+	User
+	Admin
+
+#####User:
+***Descripcion***:
+Posee un refresh token con el que podra hacer pedidos de temporal tokens. El tiempo de expiracion de los refresh tokens debe ser mayor al de los temporal tokens.Ex(refreshToken: 360h(1 semana), tempToken: 15m). El usuario para obtener un tempToken puede hacerlo mediante el mutation getTemToken de la API GraphQl. Para obtener un refreshToken debe ser mediante un request al backend que hará la peticion a LocationMicroservice como admin. Tomar de ejemplo los diagramas de secuencia que se muestran anteriormente. El temporal token del usuario le permite acceder a todos los queries, mutations y subscriptions de la API GraphQl.
+
+#####Admin:
+***Descripcion***:
+El usuario admin viene predefinido en la base de datos como (user=root y password=12345678). Se recomienda cambiar el password antes de poner la aplicacion de cara al mundo. El admin realiza los pedidos mediante REST API, para hacerlos tiene que valerse de un tempToken diferente al tempToken del usuario pero con el mismo tiempo de expiracion, que obtiene por medio del endpoint `/admin/login`  pasando sus credenciales como basic authorization. Su funcion es hacer de mediador entre el frontEnd y LocationMicroservice para validar los usuarios contra la base de datos principal de la aplicacion para así evitar que usuarios que no usen la aplicacion se valgan de esta. Todos los metodos de la API REST (exepto el `/admin/login`) exigen el uso del admin temporal token. Puede ver las funciones que ejecuta el admin en el apartado de REST.
+
+####Tipos de Token:
+
+	RefreshToken // user refresh token
+	AdminTempToken // admin temporal token
+	UserTempToken // user temporal token
+
+##Rest
 Todos los endpoints de rest son manejados por el admin.
 
 #####LoginAdmin:
@@ -189,7 +241,7 @@ httpStatusOK(200)
 {"error": "Error msg", "http_status": 511}
 ```    
 
-#####GetRefreshTokenFromClient:
+#####DeleteUser:
 ***URI***: /admin/deleteUser
 ***Method***: POST  
 ***Args***:  
@@ -218,8 +270,8 @@ httpStatusOK(200)
 {"error": "Error msg", "http_status": 511}
 ```    
 
-#GraphQl
-##Tipos
+##GraphQl
+###Tipos
 ***User***: 
 ```
 type User{ // User representa un usuario del sistema. 
@@ -248,7 +300,7 @@ enum category{ // category representa un la categoria de los usarios.
 }
 ```
 
-##Query
+###Query
 #####AllUsers:  
 ***Descripcion***:
  Retorna todos los usuarios que coincidan con una categoria.(Use la categoria GENERIC para obtener todos los usuarios.)
@@ -312,7 +364,7 @@ Requiere autenticacion con token en el header.( Con TempToken de usuario, si uti
 ***Using Playground***:
 ![alt text](./QueryScreenshots/getCloseUsers(Playground).png)
       
-##Mutation
+###Mutation
 #####UpdateGeoCord:
 ***Descripcion***:
 Actualiza la localizacion de un usuario.
@@ -343,7 +395,7 @@ Obtiene un token temporal a partir de un refresh token.
 ***Using Playground***:
 ![alt text](./QueryScreenshots/getUserTempToken(Playground).png)
       
-##Subscriptions
+###Subscriptions
 #####GetUserPos:
 ***Descripcion***:
 Subscribete a un usuario dado su id para obtener los cambios en su posicion.

@@ -53,6 +53,7 @@ func NewDb(user, password, dbHost, dbName, sslMode string) (core.Storage, error)
 	if err != nil {
 		return nil, err
 	}
+
 	data := &Data{
 		db: db,
 		stmtMap: map[string]*stmtConfig{
