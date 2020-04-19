@@ -2,9 +2,9 @@
 # postgres username
  export      DB_USER="postgres"
 # user password
- export      DB_PASS="XXXXXXXX"
+ export      DB_PASS="Wipaydb8##"
 # name of the database
- export      DB_NAME="location"
+ export      DB_NAME="geodb"
 # host
  export      DB_HOST="localhost"
 # ssl mode ("enable" or "disable")
