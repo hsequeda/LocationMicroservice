@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # postgres username
- export      DB_USER="postgres"
+ export      DB_USER="geouser"
 # user password
  export      DB_PASS="Wipaydb8##"
 # name of the database
